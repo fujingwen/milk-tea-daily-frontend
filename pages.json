@@ -62,6 +62,12 @@
       }
     },
     {
+      "path": "pages/todo/list",
+      "style": {
+        "navigationBarTitleText": "待办事项"
+      }
+    },
+    {
       "path": "pages/food/recommend",
       "style": {
         "navigationBarTitleText": "今天吃什么"

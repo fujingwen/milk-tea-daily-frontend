@@ -17,7 +17,7 @@
       <view class="birthday-info">
         <view class="birthday-date">
           <text class="date-text">{{
-            formatBirthdayDisplay(birthday.birthday)
+            formatBirthdayDisplay(birthday.birthday, birthday.calendarType)
           }}</text>
           <text class="zodiac"
             >{{ getZodiacSign(birthday.birthday).emoji }}
@@ -62,6 +62,16 @@
     <!-- 详细信息 -->
     <view class="details-section card">
       <view class="section-title">详细信息</view>
+
+      <view class="detail-item">
+        <text class="detail-label">日历类型</text>
+        <text class="detail-value">{{ birthday.calendarType === 'lunar' ? '农历' : '公历' }}</text>
+      </view>
+
+      <view class="detail-item">
+        <text class="detail-label">重复设置</text>
+        <text class="detail-value">{{ getRepeatLabel(birthday.repeatType) }}</text>
+      </view>
 
       <view class="detail-item" v-if="birthday.phone">
         <text class="detail-label">手机号</text>
@@ -193,6 +203,7 @@ import {
 import {
   RELATIONSHIP_TYPES,
   BIRTHDAY_REMINDER_TYPES,
+  REPEAT_TYPES,
 } from "@/utils/constants.js";
 
 // 响应式数据
@@ -229,6 +240,11 @@ const getRelationshipLabel = (type) => {
 const getReminderLabel = (days) => {
   const reminder = BIRTHDAY_REMINDER_TYPES.find((r) => r.value === days);
   return reminder ? reminder.label : `提前${days}天`;
+};
+
+const getRepeatLabel = (type) => {
+  const repeat = REPEAT_TYPES.find((r) => r.value === type);
+  return repeat ? repeat.label : "每年";
 };
 
 const formatFullBirthday = (dateStr) => {

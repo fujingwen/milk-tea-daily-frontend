@@ -17,17 +17,55 @@
 
         <view class="form-item">
           <text class="form-label">生日 *</text>
+          <view class="birthday-picker-container">
+            <!-- 日历类型选择 -->
+            <view class="calendar-type-selector">
+              <view
+                class="type-option"
+                :class="{ active: formData.calendarType === 'solar' }"
+                @click="formData.calendarType = 'solar'"
+              >
+                <text class="type-text">公历</text>
+              </view>
+              <view
+                class="type-option"
+                :class="{ active: formData.calendarType === 'lunar' }"
+                @click="formData.calendarType = 'lunar'"
+              >
+                <text class="type-text">农历</text>
+              </view>
+            </view>
+
+            <!-- 日期选择器 -->
+            <picker
+              mode="date"
+              :value="formData.birthday"
+              @change="onBirthdayChange"
+              :end="maxDate"
+            >
+              <view class="picker-input">
+                <text v-if="formData.birthday" class="picker-text">{{
+                  formatBirthdayDisplay(formData.birthday, formData.calendarType)
+                }}</text>
+                <text v-else class="picker-placeholder">请选择生日</text>
+              </view>
+            </picker>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">重复设置</text>
           <picker
-            mode="date"
-            :value="formData.birthday"
-            @change="onBirthdayChange"
-            :end="maxDate"
+            :range="repeatOptions"
+            range-key="label"
+            :value="repeatIndex"
+            @change="onRepeatChange"
           >
             <view class="picker-input">
-              <text v-if="formData.birthday" class="picker-text">{{
-                formatBirthdayDisplay(formData.birthday)
+              <text v-if="formData.repeatType" class="picker-text">{{
+                getRepeatLabel(formData.repeatType)
               }}</text>
-              <text v-else class="picker-placeholder">请选择生日</text>
+              <text v-else class="picker-placeholder">请选择重复类型</text>
             </view>
           </picker>
         </view>
@@ -187,12 +225,15 @@ import {
   RELATIONSHIP_TYPES,
   BIRTHDAY_REMINDER_TYPES,
   DEFAULT_BIRTHDAY_REMINDERS,
+  REPEAT_TYPES,
 } from "@/utils/constants.js";
 
 // 响应式数据
 const formData = ref({
   name: "",
   birthday: "",
+  calendarType: "solar", // solar: 公历, lunar: 农历
+  repeatType: "yearly", // none: 不重复, yearly: 每年, monthly: 每月, weekly: 每周, daily: 每天
   relationship: "",
   phone: "",
   address: "",
@@ -208,10 +249,17 @@ const recordId = ref("");
 // 计算属性
 const relationshipOptions = computed(() => RELATIONSHIP_TYPES);
 const reminderOptions = computed(() => BIRTHDAY_REMINDER_TYPES);
+const repeatOptions = computed(() => REPEAT_TYPES);
 
 const relationshipIndex = computed(() => {
   return relationshipOptions.value.findIndex(
     (item) => item.value === formData.value.relationship
+  );
+});
+
+const repeatIndex = computed(() => {
+  return repeatOptions.value.findIndex(
+    (item) => item.value === formData.value.repeatType
   );
 });
 
@@ -230,6 +278,11 @@ const getRelationshipLabel = (value) => {
   return relationship ? relationship.label : "其他";
 };
 
+const getRepeatLabel = (value) => {
+  const repeat = REPEAT_TYPES.find((r) => r.value === value);
+  return repeat ? repeat.label : "每年";
+};
+
 const onBirthdayChange = (e) => {
   formData.value.birthday = e.detail.value;
 };
@@ -237,6 +290,11 @@ const onBirthdayChange = (e) => {
 const onRelationshipChange = (e) => {
   const index = e.detail.value;
   formData.value.relationship = relationshipOptions.value[index].value;
+};
+
+const onRepeatChange = (e) => {
+  const index = e.detail.value;
+  formData.value.repeatType = repeatOptions.value[index].value;
 };
 
 const toggleReminder = (value) => {
@@ -313,6 +371,8 @@ const loadRecord = (id) => {
     formData.value = {
       name: record.name || "",
       birthday: record.birthday || "",
+      calendarType: record.calendarType || "solar",
+      repeatType: record.repeatType || "yearly",
       relationship: record.relationship || "",
       phone: record.phone || "",
       address: record.address || "",
@@ -401,6 +461,37 @@ onMounted(() => {
       .picker-placeholder {
         font-size: 28rpx;
         color: #999;
+      }
+    }
+
+    .birthday-picker-container {
+      .calendar-type-selector {
+        display: flex;
+        margin-bottom: 16rpx;
+        background: #f5f5f5;
+        border-radius: 12rpx;
+        padding: 4rpx;
+
+        .type-option {
+          flex: 1;
+          text-align: center;
+          padding: 16rpx;
+          border-radius: 8rpx;
+          transition: all 0.3s;
+
+          &.active {
+            background: #ff6b9d;
+
+            .type-text {
+              color: white;
+            }
+          }
+
+          .type-text {
+            font-size: 26rpx;
+            color: #666;
+          }
+        }
       }
     }
 

@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { initMockData } from '../mock/index.js'
 
+// 导出模块可见性store
+export { useModuleVisibilityStore } from './moduleVisibility.js'
+
 // 主应用状态
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -144,7 +147,9 @@ export const useRecordStore = defineStore('record', {
           updateTime: Date.now()
         }
         this.saveToStorage()
+        return true
       }
+      return false
     },
 
     // 删除记录

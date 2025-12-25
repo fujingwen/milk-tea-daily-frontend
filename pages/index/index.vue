@@ -1,6 +1,6 @@
 <template>
   <view class="index-page">
-    <!-- 顶部搜索和语音 -->
+    <!-- 顶部搜索 -->
     <view class="header">
       <view class="search-bar">
         <view class="search-wrapper">
@@ -13,23 +13,6 @@
           <view class="search-btn" @click="handleSearch">
             <text class="search-icon">🔍</text>
           </view>
-          <view class="voice-btn" @click="handleVoiceInput">
-            <text class="voice-icon">🎤</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 今日统计 -->
-    <view class="today-stats card">
-      <view class="stats-header">
-        <text class="stats-title">今日记录</text>
-        <text class="stats-date">{{ formatDate(Date.now(), "MM月DD日") }}</text>
-      </view>
-      <view class="stats-content">
-        <view class="stat-item" v-for="(count, type) in todayStats" :key="type">
-          <text class="stat-emoji">{{ getModuleConfig(type).icon }}</text>
-          <text class="stat-count">{{ count }}</text>
         </view>
       </view>
     </view>
@@ -83,27 +66,31 @@
           <text class="label-icon">✅</text>
           <text class="label-text">待办事项</text>
           <text class="label-count">{{ pendingTodos.length }}项</text>
+          <text class="view-more" @click="goToTodoList">查看全部</text>
         </view>
         <view class="reminder-list">
           <view
             v-for="todo in pendingTodos.slice(0, 3)"
             :key="todo.recordId"
-            class="reminder-item"
+            class="reminder-item todo-item"
             :class="todo.urgency"
-            @click="goToTodoDetail(todo.recordId)"
           >
             <view class="reminder-icon todo" :class="todo.urgency">
               <text class="icon-emoji">{{
                 todo.urgency === "overdue" ? "⚠️" : "📝"
               }}</text>
             </view>
-            <view class="reminder-content">
+            <view class="reminder-content" @click="goToTodoDetail(todo.recordId)">
               <text class="reminder-text">{{ todo.content }}</text>
               <text class="reminder-sub" v-if="todo.deadline">{{
                 todo.message
               }}</text>
             </view>
-            <view class="reminder-arrow">›</view>
+            <view class="todo-actions">
+              <view class="complete-btn" @click.stop="handleTodoComplete(todo)">
+                <text class="complete-icon">✓</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -192,115 +179,167 @@
     <!-- 模块快捷入口 - 分组显示 -->
     <view class="modules-section">
       <!-- 今日打卡 -->
-      <view class="module-group card">
-        <view class="group-header">
-          <view class="group-title">
-            <text class="group-icon">✨</text>
-            <text class="group-name">今日打卡</text>
-          </view>
-          <view class="checkin-status">
-            <text class="status-text"
-              >{{ getTodayCheckInCount }}/{{ dailyCheckInModules.length }}</text
-            >
-          </view>
-        </view>
-        <view class="modules-grid checkin-grid">
-          <view
-            class="module-item"
-            :class="{ checked: isTodayChecked(type) }"
-            v-for="type in dailyCheckInModules"
-            :key="type"
-            @click="goToAddRecord(type)"
-          >
-            <view
-              class="module-icon"
-              :style="{ backgroundColor: getModuleConfig(type).color }"
-            >
-              <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
-              <view v-if="isTodayChecked(type)" class="check-badge">✓</view>
+      <SwipeableContainer
+        v-if="!isModuleGroupCompletelyHidden('dailyCheckIn')"
+        module-type="dailyCheckIn"
+        :is-hidden="false"
+        :on-hide="() => handleModuleHide('dailyCheckIn')"
+        :on-show="() => handleModuleShow('dailyCheckIn')"
+      >
+        <view class="module-group card">
+          <view class="group-header">
+            <view class="group-title">
+              <text class="group-icon">✨</text>
+              <text class="group-name">今日打卡</text>
             </view>
-            <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            <view class="header-actions">
+              <view class="checkin-status">
+                <text class="status-text"
+                  >{{ getTodayCheckInCount }}/{{ dailyCheckInModules.length }}</text
+                >
+              </view>
+              <view class="hide-btn" @click.stop="handleModuleHideWithConfirm('dailyCheckIn')">
+                <text class="hide-icon">✕</text>
+              </view>
+            </view>
+          </view>
+          <view class="modules-grid checkin-grid">
+            <view
+              class="module-item"
+              :class="{ checked: isTodayChecked(type) }"
+              v-for="type in dailyCheckInModules"
+              :key="type"
+              @click="goToAddRecord(type)"
+            >
+              <view
+                class="module-icon"
+                :style="{ backgroundColor: getModuleConfig(type).color }"
+              >
+                <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+                <view v-if="isTodayChecked(type)" class="check-badge">✓</view>
+              </view>
+              <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            </view>
           </view>
         </view>
-      </view>
+      </SwipeableContainer>
 
       <!-- 其他模块分组 -->
-      <view class="module-group card">
-        <view class="group-header">
-          <view class="group-title">
-            <text class="group-icon">📋</text>
-            <text class="group-name">生活记录</text>
-          </view>
-        </view>
-        <view class="modules-grid">
-          <view
-            class="module-item"
-            v-for="type in lifeRecordModules"
-            :key="type"
-            @click="goToAddRecord(type)"
-          >
-            <view
-              class="module-icon"
-              :style="{ backgroundColor: getModuleConfig(type).color }"
-            >
-              <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+      <SwipeableContainer
+        v-if="!isModuleGroupCompletelyHidden('lifeRecord')"
+        module-type="lifeRecord"
+        :is-hidden="false"
+        :on-hide="() => handleModuleHide('lifeRecord')"
+        :on-show="() => handleModuleShow('lifeRecord')"
+      >
+        <view class="module-group card">
+          <view class="group-header">
+            <view class="group-title">
+              <text class="group-icon">📋</text>
+              <text class="group-name">生活记录</text>
             </view>
-            <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            <view class="header-actions">
+              <view class="hide-btn" @click.stop="handleModuleHideWithConfirm('lifeRecord')">
+                <text class="hide-icon">✕</text>
+              </view>
+            </view>
+          </view>
+          <view class="modules-grid">
+            <view
+              class="module-item"
+              v-for="type in lifeRecordModules"
+              :key="type"
+              @click="goToAddRecord(type)"
+            >
+              <view
+                class="module-icon"
+                :style="{ backgroundColor: getModuleConfig(type).color }"
+              >
+                <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+              </view>
+              <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            </view>
           </view>
         </view>
-      </view>
+      </SwipeableContainer>
 
       <!-- 美食相关 -->
-      <view class="module-group card">
-        <view class="group-header">
-          <view class="group-title">
-            <text class="group-icon">🍽️</text>
-            <text class="group-name">美食相关</text>
-          </view>
-        </view>
-        <view class="modules-grid">
-          <view
-            class="module-item"
-            v-for="type in foodRelatedModules"
-            :key="type"
-            @click="goToAddRecord(type)"
-          >
-            <view
-              class="module-icon"
-              :style="{ backgroundColor: getModuleConfig(type).color }"
-            >
-              <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+      <SwipeableContainer
+        v-if="!isModuleGroupCompletelyHidden('foodRelated')"
+        module-type="foodRelated"
+        :is-hidden="false"
+        :on-hide="() => handleModuleHide('foodRelated')"
+        :on-show="() => handleModuleShow('foodRelated')"
+      >
+        <view class="module-group card">
+          <view class="group-header">
+            <view class="group-title">
+              <text class="group-icon">🍽️</text>
+              <text class="group-name">美食相关</text>
             </view>
-            <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            <view class="header-actions">
+              <view class="hide-btn" @click.stop="handleModuleHideWithConfirm('foodRelated')">
+                <text class="hide-icon">✕</text>
+              </view>
+            </view>
+          </view>
+          <view class="modules-grid">
+            <view
+              class="module-item"
+              v-for="type in foodRelatedModules"
+              :key="type"
+              @click="goToAddRecord(type)"
+            >
+              <view
+                class="module-icon"
+                :style="{ backgroundColor: getModuleConfig(type).color }"
+              >
+                <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+              </view>
+              <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            </view>
           </view>
         </view>
-      </view>
+      </SwipeableContainer>
 
       <!-- 计划提醒 -->
-      <view class="module-group card">
-        <view class="group-header">
-          <view class="group-title">
-            <text class="group-icon">📅</text>
-            <text class="group-name">计划提醒</text>
-          </view>
-        </view>
-        <view class="modules-grid">
-          <view
-            class="module-item"
-            v-for="type in planReminderModules"
-            :key="type"
-            @click="goToAddRecord(type)"
-          >
-            <view
-              class="module-icon"
-              :style="{ backgroundColor: getModuleConfig(type).color }"
-            >
-              <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+      <SwipeableContainer
+        v-if="!isModuleGroupCompletelyHidden('planReminder')"
+        module-type="planReminder"
+        :is-hidden="false"
+        :on-hide="() => handleModuleHide('planReminder')"
+        :on-show="() => handleModuleShow('planReminder')"
+      >
+        <view class="module-group card">
+          <view class="group-header">
+            <view class="group-title">
+              <text class="group-icon">📅</text>
+              <text class="group-name">计划提醒</text>
             </view>
-            <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            <view class="header-actions">
+              <view class="hide-btn" @click.stop="handleModuleHideWithConfirm('planReminder')">
+                <text class="hide-icon">✕</text>
+              </view>
+            </view>
+          </view>
+          <view class="modules-grid">
+            <view
+              class="module-item"
+              v-for="type in planReminderModules"
+              :key="type"
+              @click="goToAddRecord(type)"
+            >
+              <view
+                class="module-icon"
+                :style="{ backgroundColor: getModuleConfig(type).color }"
+              >
+                <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+              </view>
+              <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            </view>
           </view>
         </view>
-      </view>
+      </SwipeableContainer>
     </view>
 
     <!-- 最近记录 -->
@@ -341,26 +380,56 @@
       </view>
     </view>
 
-    <!-- 语音输入弹窗 -->
-    <view v-if="showVoiceModal" class="modal-overlay" @click="closeVoiceModal">
-      <view class="voice-modal" @click.stop>
+    <!-- 隐藏模块的悬浮按钮 -->
+    <FloatingButton
+      v-for="groupKey in Object.keys(MODULE_GROUPS)"
+      :key="`floating-${groupKey}`"
+      v-if="isModuleGroupCompletelyHidden(groupKey)"
+      :visible="true"
+      :module-config="{
+        type: groupKey,
+        name: MODULE_GROUPS[groupKey].name,
+        icon: MODULE_GROUPS[groupKey].icon,
+        color: MODULE_GROUPS[groupKey].color
+      }"
+      :on-click="() => handleModuleShow(groupKey)"
+    />
+
+    <!-- 显示所有模块按钮 -->
+    <ShowAllModulesButton
+      :visible="moduleVisibilityStore.hasHiddenModules"
+      :hidden-count="moduleVisibilityStore.hiddenModulesCount"
+      :on-click="handleShowAllModules"
+    />
+
+    <!-- 待办事项完成确认弹窗 -->
+    <view v-if="showCompleteModal" class="modal-overlay" @click="closeCompleteModal">
+      <view class="complete-modal" @click.stop>
         <view class="modal-header">
-          <text class="modal-title">语音录入</text>
-          <text class="modal-close" @click="closeVoiceModal">×</text>
+          <text class="modal-title">确认完成</text>
+          <text class="modal-close" @click="closeCompleteModal">×</text>
         </view>
-        <view class="voice-content">
-          <view class="voice-icon" :class="{ recording: isRecording }">
-            <text class="mic-icon">🎤</text>
+
+        <view class="modal-content">
+          <view class="todo-info">
+            <text class="todo-title">{{ currentTodo?.content }}</text>
           </view>
-          <text class="voice-text">{{ voiceText || "点击开始录音" }}</text>
-          <view class="voice-actions">
-            <button class="btn btn-primary" @click="toggleRecording">
-              {{ isRecording ? "停止录音" : "开始录音" }}
-            </button>
-            <button class="btn btn-default" @click="closeVoiceModal">
-              取消
-            </button>
+
+          <view class="remark-section">
+            <text class="remark-label">完成备注（可选）</text>
+            <textarea
+              class="remark-input"
+              v-model="completeRemark"
+              placeholder="添加完成备注..."
+              maxlength="100"
+            />
+            <text class="char-count">{{ completeRemark.length }}/100</text>
           </view>
+        </view>
+
+        <view class="modal-actions">
+          <button class="cancel-btn" @click="closeCompleteModal">取消</button>
+          <button class="confirm-btn" @click="confirmComplete">确认完成</button>
         </view>
       </view>
     </view>
@@ -369,25 +438,32 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRecordStore, useAppStore } from "@/stores";
+import { useRecordStore, useAppStore, useModuleVisibilityStore } from "@/stores";
 import { MODULE_CONFIG, MODULE_GROUPS } from "@/utils/constants";
 import { formatDate, formatRelativeTime, getTodayRange } from "@/utils";
 import birthdayService from "@/utils/birthdayService.js";
 import reminderService from "@/utils/reminderService.js";
+import SwipeableContainer from "@/components/SwipeableContainer.vue";
+import FloatingButton from "@/components/FloatingButton.vue";
+import ShowAllModulesButton from "@/components/ShowAllModulesButton.vue";
+import { vibrate } from "@/utils/hapticFeedback.js";
 
 const recordStore = useRecordStore();
 const appStore = useAppStore();
+const moduleVisibilityStore = useModuleVisibilityStore();
 
 // 响应式数据
 const searchKeyword = ref("");
-const showVoiceModal = ref(false);
-const isRecording = ref(false);
-const voiceText = ref("");
 const weatherInfo = ref(null);
 const upcomingHolidays = ref([]);
 const upcomingBirthdays = ref([]);
 const pendingTodos = ref([]);
 const menstruationReminder = ref(null);
+
+// 待办事项完成相关数据
+const showCompleteModal = ref(false);
+const currentTodo = ref(null);
+const completeRemark = ref("");
 
 // 模块分组
 const dailyCheckInModules = computed(() => MODULE_GROUPS.dailyCheckIn.modules);
@@ -396,24 +472,8 @@ const foodRelatedModules = computed(() => MODULE_GROUPS.foodRelated.modules);
 const planReminderModules = computed(() => MODULE_GROUPS.planReminder.modules);
 
 // 计算属性
-const moduleConfig = computed(() => MODULE_CONFIG);
-
 const recentRecords = computed(() => {
   return recordStore.records.slice(0, 5);
-});
-
-const todayStats = computed(() => {
-  const { start, end } = getTodayRange();
-  const todayRecords = recordStore.records.filter(
-    (record) => record.createTime >= start && record.createTime <= end
-  );
-
-  const stats = {};
-  todayRecords.forEach((record) => {
-    stats[record.moduleType] = (stats[record.moduleType] || 0) + 1;
-  });
-
-  return stats;
 });
 
 // 是否有任何提醒
@@ -495,88 +555,6 @@ const handleSearch = () => {
   }
 };
 
-const handleVoiceInput = () => {
-  showVoiceModal.value = true;
-};
-
-const toggleRecording = () => {
-  if (isRecording.value) {
-    stopRecording();
-  } else {
-    startRecording();
-  }
-};
-
-const startRecording = () => {
-  // #ifdef MP-WEIXIN
-  uni.authorize({
-    scope: "scope.record",
-    success() {
-      const recorderManager = uni.getRecorderManager();
-      recorderManager.start({
-        duration: 60000,
-        sampleRate: 16000,
-        numberOfChannels: 1,
-        encodeBitRate: 96000,
-        format: "mp3",
-      });
-
-      recorderManager.onStart(() => {
-        isRecording.value = true;
-        voiceText.value = "正在录音...";
-      });
-
-      recorderManager.onStop((res) => {
-        isRecording.value = false;
-        voiceText.value = "录音完成，正在识别...";
-        // 这里应该调用语音识别API
-        setTimeout(() => {
-          voiceText.value = "识别结果：今天心情很好";
-        }, 1000);
-      });
-    },
-    fail() {
-      uni.showToast({
-        title: "需要录音权限",
-        icon: "none",
-      });
-    },
-  });
-  // #endif
-
-  // #ifdef APP-PLUS
-  // App端使用讯飞语音SDK
-  isRecording.value = true;
-  voiceText.value = "正在录音...";
-  // 模拟录音
-  setTimeout(() => {
-    isRecording.value = false;
-    voiceText.value = "录音完成，正在识别...";
-    setTimeout(() => {
-      voiceText.value = "识别结果：今天心情很好";
-    }, 1000);
-  }, 3000);
-  // #endif
-};
-
-const stopRecording = () => {
-  // #ifdef MP-WEIXIN
-  const recorderManager = uni.getRecorderManager();
-  recorderManager.stop();
-  // #endif
-
-  // #ifdef APP-PLUS
-  isRecording.value = false;
-  voiceText.value = "录音已停止";
-  // #endif
-};
-
-const closeVoiceModal = () => {
-  showVoiceModal.value = false;
-  isRecording.value = false;
-  voiceText.value = "";
-};
-
 const goToAddRecord = (moduleType) => {
   if (moduleType === "food") {
     uni.navigateTo({
@@ -605,6 +583,68 @@ const goToRecordList = () => {
   });
 };
 
+// 待办相关导航方法
+const goToTodoDetail = (recordId) => {
+  uni.navigateTo({
+    url: `/pages/record/detail?id=${recordId}`,
+  });
+};
+
+const goToTodoList = () => {
+  uni.navigateTo({
+    url: "/pages/todo/list",
+  });
+};
+
+// 待办事项完成相关方法
+const handleTodoComplete = (todo) => {
+  vibrate.light();
+  currentTodo.value = todo;
+  showCompleteModal.value = true;
+};
+
+const closeCompleteModal = () => {
+  showCompleteModal.value = false;
+  currentTodo.value = null;
+  completeRemark.value = "";
+};
+
+const confirmComplete = async () => {
+  try {
+    if (!currentTodo.value) return;
+
+    vibrate.medium();
+
+    // 更新待办事项状态
+    const success = recordStore.updateRecord(currentTodo.value.recordId, {
+      isCompleted: true,
+      completeRemark: completeRemark.value.trim(),
+      completeTime: Date.now()
+    });
+
+    if (success) {
+      uni.showToast({
+        title: '已完成',
+        icon: 'success'
+      });
+
+      // 重新加载提醒数据
+      await loadReminders();
+
+      closeCompleteModal();
+    } else {
+      throw new Error('更新失败');
+    }
+  } catch (error) {
+    console.error('完成待办事项失败:', error);
+    vibrate.error();
+    uni.showToast({
+      title: '操作失败，请重试',
+      icon: 'none'
+    });
+  }
+};
+
 // 生日相关导航方法
 const goToBirthdayList = () => {
   uni.navigateTo({
@@ -615,13 +655,6 @@ const goToBirthdayList = () => {
 const goToBirthdayDetail = (recordId) => {
   uni.navigateTo({
     url: `/pages/birthday/detail?id=${recordId}`,
-  });
-};
-
-// 待办相关导航方法
-const goToTodoDetail = (recordId) => {
-  uni.navigateTo({
-    url: `/pages/record/detail?id=${recordId}`,
   });
 };
 
@@ -662,8 +695,110 @@ const loadReminders = async () => {
 onMounted(async () => {
   recordStore.loadFromStorage();
   appStore.loadUserData();
+
+  // 初始化模块可见性状态
+  await moduleVisibilityStore.loadFromStorage();
+
   await loadReminders();
 });
+
+// 模块隐藏相关方法
+const handleModuleHide = async (groupKey) => {
+  try {
+    // 隐藏整个模块组
+    await moduleVisibilityStore.hideModule(groupKey);
+    console.log(`模块组 ${groupKey} 已隐藏`);
+  } catch (error) {
+    console.error('隐藏模块组失败:', error);
+    uni.showToast({
+      title: '隐藏失败，请重试',
+      icon: 'none'
+    });
+  }
+};
+
+// 通过按钮隐藏模块（带确认对话框）
+const handleModuleHideWithConfirm = async (groupKey) => {
+  try {
+    // 轻微触觉反馈
+    vibrate.light();
+
+    // 获取模块组名称
+    const groupName = MODULE_GROUPS[groupKey]?.name || '该模块组';
+
+    // 显示确认对话框
+    const result = await new Promise((resolve) => {
+      uni.showModal({
+        title: '确认隐藏',
+        content: `确定要隐藏"${groupName}"吗？隐藏后可以通过悬浮按钮或"显示所有模块"按钮恢复。`,
+        confirmText: '隐藏',
+        cancelText: '取消',
+        success: (res) => {
+          resolve(res.confirm);
+        },
+        fail: () => {
+          resolve(false);
+        }
+      });
+    });
+
+    if (result) {
+      // 用户确认隐藏，中等触觉反馈
+      vibrate.medium();
+      await handleModuleHide(groupKey);
+      uni.showToast({
+        title: '已隐藏',
+        icon: 'success'
+      });
+    }
+  } catch (error) {
+    console.error('隐藏模块组失败:', error);
+    // 错误触觉反馈
+    vibrate.error();
+    uni.showToast({
+      title: '操作失败，请重试',
+      icon: 'none'
+    });
+  }
+};
+
+const handleModuleShow = async (groupKey) => {
+  try {
+    // 显示整个模块组
+    await moduleVisibilityStore.showModule(groupKey);
+    console.log(`模块组 ${groupKey} 已显示`);
+  } catch (error) {
+    console.error('显示模块组失败:', error);
+    uni.showToast({
+      title: '显示失败，请重试',
+      icon: 'none'
+    });
+  }
+};
+
+const handleShowAllModules = async () => {
+  try {
+    await moduleVisibilityStore.showAllModules();
+    console.log('所有模块组已显示');
+    uni.showToast({
+      title: '所有模块已恢复显示',
+      icon: 'success'
+    });
+  } catch (error) {
+    console.error('显示所有模块失败:', error);
+    uni.showToast({
+      title: '操作失败，请重试',
+      icon: 'none'
+    });
+  }
+};
+
+// 检查模块组是否隐藏
+const isModuleGroupCompletelyHidden = (groupKey) => {
+  return moduleVisibilityStore.isModuleHidden(groupKey);
+};
+
+
 </script>
 
 <style lang="scss" scoped>
@@ -695,8 +830,7 @@ onMounted(async () => {
         color: #333;
       }
 
-      .search-btn,
-      .voice-btn {
+      .search-btn {
         width: 60rpx;
         height: 60rpx;
         display: flex;
@@ -704,21 +838,9 @@ onMounted(async () => {
         justify-content: center;
         border-radius: 50%;
         transition: all 0.3s;
-      }
-
-      .search-btn {
         background: #667eea;
 
         .search-icon {
-          font-size: 24rpx;
-          color: white;
-        }
-      }
-
-      .voice-btn {
-        background: #ff6b9d;
-
-        .voice-icon {
           font-size: 24rpx;
           color: white;
         }
@@ -804,6 +926,75 @@ onMounted(async () => {
         }
       }
 
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16rpx;
+
+        .checkin-status {
+          .status-text {
+            font-size: 24rpx;
+            color: #667eea;
+            font-weight: 500;
+          }
+        }
+
+        .hide-btn {
+          width: 56rpx;
+          height: 56rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 107, 157, 0.1);
+          border-radius: 50%;
+          transition: all 0.3s;
+          cursor: pointer;
+
+          &:hover {
+            background: rgba(255, 107, 157, 0.2);
+            transform: scale(1.1);
+          }
+
+          &:active {
+            transform: scale(0.9);
+            background: rgba(255, 107, 157, 0.3);
+          }
+
+          .hide-icon {
+            font-size: 20rpx;
+            color: #ff6b9d;
+            font-weight: bold;
+            transition: all 0.3s;
+          }
+        }
+      }
+    }
+
+    // 响应式设计 - 小屏幕适配
+    @media (max-width: 750rpx) {
+      .group-header {
+        .header-actions {
+          gap: 12rpx;
+
+          .hide-btn {
+            width: 48rpx;
+            height: 48rpx;
+
+            .hide-icon {
+              font-size: 18rpx;
+            }
+          }
+
+          .checkin-status {
+            .status-text {
+              font-size: 22rpx;
+            }
+          }
+        }
+      }
+      }
+
+      // 兼容旧版本，保持原有的checkin-status样式
       .checkin-status {
         .status-text {
           font-size: 24rpx;
@@ -883,7 +1074,6 @@ onMounted(async () => {
       }
     }
   }
-}
 
 .recent-records {
   padding: 0 20rpx;
@@ -953,116 +1143,6 @@ onMounted(async () => {
     .empty-text {
       font-size: 28rpx;
       color: #999;
-    }
-  }
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-
-  .voice-modal {
-    width: 600rpx;
-    background: white;
-    border-radius: 20rpx;
-    overflow: hidden;
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 30rpx 40rpx;
-      border-bottom: 1rpx solid #f0f0f0;
-
-      .modal-title {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
-      }
-
-      .modal-close {
-        font-size: 40rpx;
-        color: #999;
-        width: 60rpx;
-        height: 60rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-    }
-
-    .voice-content {
-      padding: 40rpx;
-      text-align: center;
-
-      .voice-icon {
-        width: 120rpx;
-        height: 120rpx;
-        border-radius: 50%;
-        background: #667eea;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 30rpx;
-        transition: all 0.3s;
-
-        &.recording {
-          background: #ff3b30;
-          animation: pulse 1s infinite;
-        }
-
-        .mic-icon {
-          font-size: 48rpx;
-          color: white;
-        }
-      }
-
-      .voice-text {
-        display: block;
-        font-size: 28rpx;
-        color: #333;
-        margin-bottom: 40rpx;
-      }
-
-      .voice-actions {
-        display: flex;
-        gap: 20rpx;
-        justify-content: center;
-
-        .btn {
-          padding: 20rpx 40rpx;
-          border-radius: 50rpx;
-          border: none;
-          font-size: 28rpx;
-          transition: all 0.3s;
-
-          &.btn-primary {
-            background: #667eea;
-            color: white;
-
-            &:active {
-              background: #5a6fd8;
-            }
-          }
-
-          &.btn-default {
-            background: #f5f5f5;
-            color: #333;
-
-            &:active {
-              background: #e8e8e8;
-            }
-          }
-        }
-      }
     }
   }
 }
@@ -1216,6 +1296,48 @@ onMounted(async () => {
           border-left: 4rpx solid #ffa502;
         }
 
+        // 待办事项特殊样式
+        &.todo-item {
+          .reminder-content {
+            cursor: pointer;
+
+            &:hover {
+              opacity: 0.8;
+            }
+          }
+
+          .todo-actions {
+            flex-shrink: 0;
+
+            .complete-btn {
+              width: 56rpx;
+              height: 56rpx;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: linear-gradient(135deg, #34c759, #30d158);
+              border-radius: 50%;
+              transition: all 0.3s;
+              cursor: pointer;
+
+              &:hover {
+                transform: scale(1.1);
+                box-shadow: 0 4rpx 12rpx rgba(52, 199, 89, 0.3);
+              }
+
+              &:active {
+                transform: scale(0.9);
+              }
+
+              .complete-icon {
+                font-size: 24rpx;
+                color: white;
+                font-weight: bold;
+              }
+            }
+          }
+        }
+
         .reminder-icon {
           width: 60rpx;
           height: 60rpx;
@@ -1326,5 +1448,217 @@ onMounted(async () => {
   border-radius: 20rpx;
   padding: 24rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+// 待办事项完成弹窗样式
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.complete-modal {
+  width: 600rpx;
+  background: white;
+  border-radius: 20rpx;
+  overflow: hidden;
+  margin: 0 40rpx;
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30rpx 40rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+
+    .modal-title {
+      font-size: 32rpx;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .modal-close {
+      font-size: 40rpx;
+      color: #999;
+      width: 60rpx;
+      height: 60rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+  }
+
+  .modal-content {
+    padding: 40rpx;
+
+    .todo-info {
+      margin-bottom: 30rpx;
+      padding: 20rpx;
+      background: #f8f9fa;
+      border-radius: 12rpx;
+
+      .todo-title {
+        font-size: 28rpx;
+        color: #333;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+    }
+
+    .remark-section {
+      .remark-label {
+        display: block;
+        font-size: 26rpx;
+        color: #666;
+        margin-bottom: 12rpx;
+      }
+
+      .remark-input {
+        width: 100%;
+        min-height: 120rpx;
+        padding: 20rpx;
+        border: 1rpx solid #e0e0e0;
+        border-radius: 12rpx;
+        font-size: 26rpx;
+        background: #f8f9fa;
+        resize: none;
+        line-height: 1.5;
+      }
+
+      .char-count {
+        display: block;
+        text-align: right;
+        font-size: 22rpx;
+        color: #999;
+        margin-top: 8rpx;
+      }
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 20rpx;
+    padding: 0 40rpx 40rpx;
+
+    .cancel-btn,
+    .confirm-btn {
+      flex: 1;
+      height: 80rpx;
+      border-radius: 40rpx;
+      font-size: 28rpx;
+      border: none;
+      transition: all 0.3s;
+
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+
+    .cancel-btn {
+      background: #f5f5f5;
+      color: #666;
+    }
+
+    .confirm-btn {
+      background: #34c759;
+      color: white;
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 750rpx) {
+  .complete-modal {
+    width: 90%;
+    margin: 0 5%;
+
+    .modal-header {
+      padding: 24rpx 30rpx;
+
+      .modal-title {
+        font-size: 28rpx;
+      }
+    }
+
+    .modal-content {
+      padding: 30rpx;
+
+      .todo-info {
+        .todo-title {
+          font-size: 26rpx;
+        }
+      }
+    }
+
+    .modal-actions {
+      padding: 0 30rpx 30rpx;
+
+      .cancel-btn,
+      .confirm-btn {
+        height: 70rpx;
+        font-size: 26rpx;
+      }
+    }
+  }
+}
+
+// 暗色模式支持
+@media (prefers-color-scheme: dark) {
+  .complete-modal {
+    background: #2c2c2e;
+
+    .modal-header {
+      border-bottom-color: #3a3a3c;
+
+      .modal-title {
+        color: #ffffff;
+      }
+
+      .modal-close {
+        color: #8e8e93;
+      }
+    }
+
+    .modal-content {
+      .todo-info {
+        background: #1c1c1e;
+
+        .todo-title {
+          color: #ffffff;
+        }
+      }
+
+      .remark-section {
+        .remark-label {
+          color: #8e8e93;
+        }
+
+        .remark-input {
+          background: #1c1c1e;
+          border-color: #3a3a3c;
+          color: #ffffff;
+        }
+
+        .char-count {
+          color: #8e8e93;
+        }
+      }
+    }
+
+    .modal-actions {
+      .cancel-btn {
+        background: #3a3a3c;
+        color: #ffffff;
+      }
+    }
+  }
 }
 </style>

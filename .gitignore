@@ -104,3 +104,5 @@ coverage/
 # Debug files
 debug.log
 error.log
+
+.kiro/

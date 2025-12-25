@@ -291,54 +291,86 @@
 
         <!-- 今日关键字表单 -->
         <template v-if="currentModule === 'keyword'">
-          <view class="form-item">
-            <text class="form-label">今日关键字</text>
-            <view class="keyword-input-wrapper">
-              <input
-                class="keyword-input"
-                v-model="formData.keywordInput"
-                placeholder="输入关键字后点击添加"
-                @confirm="addKeyword"
-              />
-              <button class="add-keyword-btn" @click="addKeyword">添加</button>
-            </view>
-            <view
-              class="keywords-list"
-              v-if="formData.keywords && formData.keywords.length > 0"
-            >
-              <view
-                v-for="(keyword, index) in formData.keywords"
-                :key="index"
-                class="keyword-tag"
-              >
-                <text class="keyword-text">{{ keyword }}</text>
-                <text class="keyword-remove" @click="removeKeyword(index)"
-                  >×</text
+          <view class="keyword-section">
+            <view class="form-item">
+              <text class="form-label">
+                <text class="label-icon">🏷️</text>
+                今日关键字
+              </text>
+              <view class="keyword-input-wrapper">
+                <input
+                  class="keyword-input"
+                  v-model="formData.keywordInput"
+                  placeholder="输入关键字后点击添加"
+                  @confirm="addKeyword"
+                />
+                <button
+                  class="add-keyword-btn"
+                  @click="addKeyword"
+                  :disabled="!formData.keywordInput?.trim()"
                 >
+                  <text class="btn-icon">+</text>
+                  <text class="btn-text">添加</text>
+                </button>
               </view>
-            </view>
-            <view class="keyword-suggestions">
-              <text class="suggestion-title">常用关键字：</text>
-              <view class="suggestion-list">
-                <view
-                  v-for="suggestion in keywordSuggestions"
-                  :key="suggestion"
-                  class="suggestion-item"
-                  @click="addSuggestionKeyword(suggestion)"
-                >
-                  {{ suggestion }}
+
+              <!-- 已添加的关键字 -->
+              <view
+                class="keywords-list"
+                v-if="formData.keywords && formData.keywords.length > 0"
+              >
+                <text class="keywords-title">已添加 ({{ formData.keywords.length }})</text>
+                <view class="keywords-container">
+                  <view
+                    v-for="(keyword, index) in formData.keywords"
+                    :key="index"
+                    class="keyword-tag"
+                  >
+                    <text class="keyword-text">{{ keyword }}</text>
+                    <view class="keyword-remove" @click="removeKeyword(index)">
+                      <text class="remove-icon">×</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+
+              <!-- 常用关键字建议 -->
+              <view class="keyword-suggestions">
+                <text class="suggestion-title">
+                  <text class="suggestion-icon">💡</text>
+                  常用关键字
+                </text>
+                <view class="suggestion-tags">
+                  <view
+                    v-for="suggestion in keywordSuggestions"
+                    :key="suggestion"
+                    class="suggestion-tag"
+                    :class="{ 'selected': formData.keywords.includes(suggestion) }"
+                    @click="addSuggestionKeyword(suggestion)"
+                  >
+                    <text class="tag-text">{{ suggestion }}</text>
+                    <text
+                      v-if="formData.keywords.includes(suggestion)"
+                      class="tag-check"
+                    >✓</text>
+                  </view>
                 </view>
               </view>
             </view>
-          </view>
-          <view class="form-item">
-            <text class="form-label">今日感想</text>
-            <u-textarea
-              v-model="formData.description"
-              placeholder="用几句话描述今天..."
-              maxlength="300"
-              count
-            />
+
+            <view class="form-item">
+              <text class="form-label">
+                <text class="label-icon">💭</text>
+                今日感想
+              </text>
+              <u-textarea
+                v-model="formData.description"
+                placeholder="用几句话描述今天的心情和感受..."
+                maxlength="300"
+                count
+                class="description-textarea"
+              />
+            </view>
           </view>
         </template>
 
@@ -404,17 +436,14 @@
         </template>
       </view>
 
-      <!-- 语音输入 -->
-      <view class="voice-section card" v-if="currentModule">
-        <u-button type="primary" icon="mic" @click="handleVoiceInput">
-          语音录入
-        </u-button>
-      </view>
-
       <!-- 操作按钮 -->
       <view class="action-buttons" v-if="currentModule">
-        <u-button type="default" @click="handleCancel">取消</u-button>
-        <u-button type="primary" @click="handleSave">保存</u-button>
+        <button class="cancel-button" @click="handleCancel">
+          <text class="button-text">取消</text>
+        </button>
+        <button class="save-button" @click="handleSave">
+          <text class="button-text">保存</text>
+        </button>
       </view>
     </view>
   </view>
@@ -436,11 +465,6 @@ import {
   MEAL_TYPES,
   FOOD_TAGS,
   RATING_OPTIONS,
-  RECIPE_CATEGORIES,
-  DIFFICULTY_LEVELS,
-  COOK_TIME_OPTIONS,
-  SERVING_OPTIONS,
-  RECIPE_TAGS,
   EXERCISE_TYPES,
 } from "@/utils/constants";
 import { showToast } from "@/utils";
@@ -567,10 +591,6 @@ const initFormData = (type) => {
   }
 };
 
-const handleVoiceInput = () => {
-  showToast("语音功能开发中...", "none");
-};
-
 const toggleTag = (tag) => {
   const tags = formData.value.tags;
   const index = tags.indexOf(tag);
@@ -583,18 +603,11 @@ const toggleTag = (tag) => {
 
 // 关键字相关方法
 const keywordSuggestions = [
-  "开心",
-  "忙碌",
-  "充实",
-  "疲惫",
-  "放松",
-  "学习",
-  "工作",
-  "运动",
-  "美食",
-  "旅行",
-  "朋友",
-  "家人",
+  "开心", "充实", "忙碌", "疲惫", "放松", "焦虑",
+  "学习", "工作", "运动", "阅读", "思考", "创作",
+  "美食", "旅行", "购物", "电影", "音乐", "游戏",
+  "朋友", "家人", "恋人", "同事", "聚会", "独处",
+  "成长", "挑战", "收获", "感恩", "反思", "计划"
 ];
 
 const addKeyword = () => {
@@ -932,53 +945,475 @@ onMounted(() => {
   }
 }
 
-.voice-section {
-  text-align: center;
-  margin-bottom: 20rpx;
-}
-
 .action-buttons {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   background: white;
-  padding: 20rpx;
+  padding: 24rpx 20rpx;
   display: flex;
   gap: 20rpx;
-  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  border-top: 1rpx solid #f0f0f0;
 
-  .u-button {
+  .cancel-button,
+  .save-button {
     flex: 1;
+    height: 88rpx;
+    border: none;
+    border-radius: 44rpx;
+    font-size: 32rpx;
+    font-weight: 600;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .button-text {
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  .cancel-button {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 2rpx solid #e9ecef;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #6c757d, #495057);
+      transition: left 0.3s;
+      z-index: 0;
+    }
+
+    &:active {
+      &::before {
+        left: 0;
+      }
+
+      .button-text {
+        color: white;
+      }
+    }
+  }
+
+  .save-button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4rpx 15rpx rgba(102, 126, 234, 0.3);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #5a6fd8, #6a4c93);
+      transition: left 0.3s;
+      z-index: 0;
+    }
+
+    &:active {
+      &::before {
+        left: 0;
+      }
+    }
   }
 }
 </style>
 
-.redirect-notice { display: flex; flex-direction: column; align-items: center;
-padding: 60rpx 40rpx; text-align: center; .notice-icon { font-size: 80rpx;
-margin-bottom: 20rpx; } .notice-title { font-size: 32rpx; font-weight: bold;
-color: #333; margin-bottom: 16rpx; } .notice-desc { font-size: 26rpx; color:
-#666; line-height: 1.5; margin-bottom: 40rpx; } .redirect-btn { padding: 20rpx
-40rpx; background: #32cd32; color: white; border: none; border-radius: 50rpx;
-font-size: 28rpx; } } // 今日关键字样式 .keyword-input-wrapper { display: flex;
-gap: 16rpx; margin-bottom: 20rpx; .keyword-input { flex: 1; height: 70rpx;
-padding: 0 20rpx; background: #f8f8f8; border-radius: 12rpx; font-size: 28rpx; }
-.add-keyword-btn { width: 120rpx; height: 70rpx; background: #667eea; color:
-white; border: none; border-radius: 12rpx; font-size: 26rpx; display: flex;
-align-items: center; justify-content: center; } } .keywords-list { display:
-flex; flex-wrap: wrap; gap: 12rpx; margin-bottom: 20rpx; .keyword-tag { display:
-flex; align-items: center; gap: 8rpx; padding: 10rpx 16rpx; background: #667eea;
-border-radius: 20rpx; .keyword-text { font-size: 26rpx; color: white; }
-.keyword-remove { font-size: 28rpx; color: rgba(255, 255, 255, 0.8); width:
-30rpx; height: 30rpx; display: flex; align-items: center; justify-content:
-center; } } } .keyword-suggestions { .suggestion-title { font-size: 24rpx;
-color: #666; margin-bottom: 12rpx; display: block; } .suggestion-list { display:
-flex; flex-wrap: wrap; gap: 12rpx; .suggestion-item { padding: 8rpx 16rpx;
-background: #f0f0f0; border-radius: 16rpx; font-size: 24rpx; color: #666;
-transition: all 0.3s; &:active { background: #667eea; color: white; } } } } //
-运动记录样式 .exercise-options { display: grid; grid-template-columns: repeat(4,
-1fr); gap: 12rpx; .exercise-option { display: flex; flex-direction: column;
-align-items: center; padding: 16rpx; border-radius: 12rpx; border: 2rpx solid
-#eee; transition: all 0.3s; &.active { border-color: #34c759; background:
-rgba(52, 199, 89, 0.1); } .exercise-emoji { font-size: 28rpx; margin-bottom:
-6rpx; } .exercise-label { font-size: 22rpx; color: #333; } } }
+.redirect-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 40rpx;
+  text-align: center;
+
+  .notice-icon {
+    font-size: 80rpx;
+    margin-bottom: 20rpx;
+  }
+
+  .notice-title {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 16rpx;
+  }
+
+  .notice-desc {
+    font-size: 26rpx;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 40rpx;
+  }
+
+  .redirect-btn {
+    padding: 20rpx 40rpx;
+    background: #32cd32;
+    color: white;
+    border: none;
+    border-radius: 50rpx;
+    font-size: 28rpx;
+  }
+}
+
+// 今日关键字样式优化
+.keyword-section {
+  .form-label {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+
+    .label-icon {
+      font-size: 24rpx;
+    }
+  }
+}
+
+.keyword-input-wrapper {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+
+  .keyword-input {
+    flex: 1;
+    height: 80rpx;
+    padding: 0 24rpx;
+    background: #f8f9fa;
+    border: 2rpx solid #e9ecef;
+    border-radius: 16rpx;
+    font-size: 28rpx;
+    color: #333;
+    transition: all 0.3s;
+
+    &:focus {
+      border-color: #667eea;
+      background: #fff;
+      box-shadow: 0 0 0 4rpx rgba(102, 126, 234, 0.1);
+    }
+  }
+
+  .add-keyword-btn {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    padding: 0 24rpx;
+    height: 80rpx;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 16rpx;
+    font-size: 26rpx;
+    font-weight: 500;
+    transition: all 0.3s;
+    min-width: 120rpx;
+    justify-content: center;
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &:disabled {
+      background: #e9ecef;
+      color: #6c757d;
+      transform: none;
+    }
+
+    .btn-icon {
+      font-size: 28rpx;
+      font-weight: bold;
+    }
+
+    .btn-text {
+      font-size: 26rpx;
+    }
+  }
+}
+
+.keywords-list {
+  margin-bottom: 32rpx;
+
+  .keywords-title {
+    display: block;
+    font-size: 24rpx;
+    color: #667eea;
+    font-weight: 500;
+    margin-bottom: 16rpx;
+  }
+
+  .keywords-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12rpx;
+  }
+
+  .keyword-tag {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    padding: 12rpx 16rpx;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 24rpx;
+    box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.2);
+    transition: all 0.3s;
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    .keyword-text {
+      font-size: 26rpx;
+      color: white;
+      font-weight: 500;
+    }
+
+    .keyword-remove {
+      width: 32rpx;
+      height: 32rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transition: all 0.3s;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(0.9);
+      }
+
+      .remove-icon {
+        font-size: 24rpx;
+        color: white;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+.keyword-suggestions {
+  .suggestion-title {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    font-size: 26rpx;
+    color: #495057;
+    font-weight: 500;
+    margin-bottom: 16rpx;
+
+    .suggestion-icon {
+      font-size: 22rpx;
+    }
+  }
+
+  .suggestion-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12rpx;
+
+    .suggestion-tag {
+      display: flex;
+      align-items: center;
+      gap: 6rpx;
+      padding: 10rpx 16rpx;
+      background: #f8f9fa;
+      border: 2rpx solid #e9ecef;
+      border-radius: 24rpx;
+      font-size: 24rpx;
+      color: #495057;
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        transition: left 0.3s;
+        z-index: 0;
+      }
+
+      &:active:not(.selected) {
+        transform: scale(0.95);
+
+        &::before {
+          left: 0;
+        }
+
+        .tag-text {
+          color: white;
+          position: relative;
+          z-index: 1;
+        }
+      }
+
+      &.selected {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border-color: #28a745;
+        color: white;
+        cursor: not-allowed;
+
+        .tag-text {
+          color: white;
+          position: relative;
+          z-index: 1;
+        }
+
+        .tag-check {
+          color: white;
+          font-weight: bold;
+          position: relative;
+          z-index: 1;
+        }
+      }
+
+      .tag-text {
+        font-size: 24rpx;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+        transition: color 0.3s;
+      }
+
+      .tag-check {
+        font-size: 20rpx;
+        font-weight: bold;
+        position: relative;
+        z-index: 1;
+      }
+    }
+  }
+}
+
+.description-textarea {
+  background: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  transition: all 0.3s;
+
+  &:focus {
+    border-color: #667eea;
+    background: #fff;
+    box-shadow: 0 0 0 4rpx rgba(102, 126, 234, 0.1);
+  }
+}
+
+// 运动记录样式
+.exercise-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+
+  .exercise-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16rpx;
+    border-radius: 12rpx;
+    border: 2rpx solid #eee;
+    transition: all 0.3s;
+
+    &.active {
+      border-color: #34c759;
+      background: rgba(52, 199, 89, 0.1);
+    }
+
+    .exercise-emoji {
+      font-size: 28rpx;
+      margin-bottom: 6rpx;
+    }
+
+    .exercise-label {
+      font-size: 22rpx;
+      color: #333;
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 750rpx) {
+  .keyword-suggestions {
+    .suggestion-tags {
+      gap: 8rpx;
+
+      .suggestion-tag {
+        padding: 8rpx 12rpx;
+        font-size: 22rpx;
+
+        .tag-text {
+          font-size: 22rpx;
+        }
+
+        .tag-check {
+          font-size: 18rpx;
+        }
+      }
+    }
+  }
+
+  .action-buttons {
+    padding: 20rpx 16rpx;
+    gap: 16rpx;
+
+    .cancel-button,
+    .save-button {
+      height: 80rpx;
+      font-size: 28rpx;
+      border-radius: 40rpx;
+    }
+  }
+}
+
+// 暗色模式支持
+@media (prefers-color-scheme: dark) {
+  .keyword-suggestions {
+    .suggestion-tags {
+      .suggestion-tag {
+        background: #2c2c2e;
+        border-color: #3a3a3c;
+        color: #ffffff;
+
+        &:not(.selected) {
+          &::before {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+          }
+        }
+      }
+    }
+  }
+
+  .action-buttons {
+    background: #1c1c1e;
+    border-top-color: #3a3a3c;
+
+    .cancel-button {
+      background: #2c2c2e;
+      color: #ffffff;
+      border-color: #3a3a3c;
+
+      &::before {
+        background: linear-gradient(135deg, #8e8e93, #6d6d70);
+      }
+    }
+  }
+}

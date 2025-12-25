@@ -233,6 +233,15 @@ export const BIRTHDAY_REMINDER_TYPES = [
 // 默认提醒设置
 export const DEFAULT_BIRTHDAY_REMINDERS = [30, 7, 3, 1, 0]
 
+// 重复类型
+export const REPEAT_TYPES = [
+  { value: 'none', label: '不重复' },
+  { value: 'daily', label: '每天' },
+  { value: 'weekly', label: '每周' },
+  { value: 'monthly', label: '每月' },
+  { value: 'yearly', label: '每年' }
+]
+
 // 运动类型
 export const EXERCISE_TYPES = [
   { value: 'running', label: '跑步', emoji: '🏃', unit: 'km' },

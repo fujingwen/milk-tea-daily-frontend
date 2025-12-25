@@ -427,10 +427,15 @@ export function getZodiacSign(birthday) {
 }
 
 // 格式化生日显示
-export function formatBirthdayDisplay(birthday) {
+export function formatBirthdayDisplay(birthday, calendarType = 'solar') {
   const date = new Date(birthday)
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
+
+  if (calendarType === 'lunar') {
+    return `农历${month}月${day}日`
+  }
+
   return `${month}月${day}日`
 }
 

@@ -85,7 +85,7 @@
               >还有{{ getDaysUntilBirthday(birthday.birthday) }}天</text
             >
             <text class="birthday-date">{{
-              formatBirthdayDisplay(birthday.birthday)
+              formatBirthdayDisplay(birthday.birthday, birthday.calendarType)
             }}</text>
           </view>
         </view>
@@ -126,7 +126,7 @@
           </view>
           <view class="birthday-actions">
             <text class="birthday-date">{{
-              formatBirthdayDisplay(birthday.birthday)
+              formatBirthdayDisplay(birthday.birthday, birthday.calendarType)
             }}</text>
             <text class="days-info"
               >{{ getDaysUntilBirthday(birthday.birthday) }}天后</text
