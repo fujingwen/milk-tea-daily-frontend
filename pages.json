@@ -1,0 +1,127 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "奶茶与日常",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/calendar/calendar",
+      "style": {
+        "navigationBarTitleText": "日历查看"
+      }
+    },
+    {
+      "path": "pages/modules/modules",
+      "style": {
+        "navigationBarTitleText": "模块管理"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "个人中心"
+      }
+    },
+    {
+      "path": "pages/record/add",
+      "style": {
+        "navigationBarTitleText": "新增记录"
+      }
+    },
+    {
+      "path": "pages/record/detail",
+      "style": {
+        "navigationBarTitleText": "记录详情"
+      }
+    },
+    {
+      "path": "pages/record/list",
+      "style": {
+        "navigationBarTitleText": "记录列表"
+      }
+    },
+    {
+      "path": "pages/birthday/list",
+      "style": {
+        "navigationBarTitleText": "生日记录"
+      }
+    },
+    {
+      "path": "pages/birthday/add",
+      "style": {
+        "navigationBarTitleText": "添加生日"
+      }
+    },
+    {
+      "path": "pages/birthday/detail",
+      "style": {
+        "navigationBarTitleText": "生日详情"
+      }
+    },
+    {
+      "path": "pages/food/recommend",
+      "style": {
+        "navigationBarTitleText": "今天吃什么"
+      }
+    },
+    {
+      "path": "pages/recipe/list",
+      "style": {
+        "navigationBarTitleText": "我的菜谱"
+      }
+    },
+    {
+      "path": "pages/recipe/add",
+      "style": {
+        "navigationBarTitleText": "添加菜谱"
+      }
+    },
+    {
+      "path": "pages/recipe/detail",
+      "style": {
+        "navigationBarTitleText": "菜谱详情"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#ff6b9d",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "static/tab-home.svg",
+        "selectedIconPath": "static/tab-home-current.svg",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/calendar/calendar",
+        "iconPath": "static/tab-calendar.svg",
+        "selectedIconPath": "static/tab-calendar-current.svg",
+        "text": "日历"
+      },
+      {
+        "pagePath": "pages/modules/modules",
+        "iconPath": "static/tab-modules.svg",
+        "selectedIconPath": "static/tab-modules-current.svg",
+        "text": "模块"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "iconPath": "static/tab-profile.svg",
+        "selectedIconPath": "static/tab-profile-current.svg",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "奶茶与日常",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  }
+}
