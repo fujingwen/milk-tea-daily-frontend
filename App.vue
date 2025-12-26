@@ -38,35 +38,48 @@ export default {
 </script>
 
 <style lang="scss">
-/* 全局样式 */
+/* 引入 uview-plus 样式 */
+@import '@/uni_modules/uview-plus/index.scss';
+
+/* 全局样式 - 使用标准变量 */
 page {
-  background-color: #f5f5f5;
+  background-color: $uni-bg-color-grey;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', SimSun, sans-serif;
 }
 
 .container {
-  padding: 20rpx;
+  padding: $uni-spacing-row-base;
 }
 
-.card {
-  background: white;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+.u-card-custom {
+  background: $uni-bg-color;
+  border-radius: $uni-border-radius-lg;
+  padding: $uni-spacing-row-lg;
+  margin-bottom: $uni-spacing-row-base;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 50rpx;
+.u-btn-primary-custom {
+  background: linear-gradient(135deg, #ff6b9d 0%, #764ba2 100%);
+  color: $uni-text-color-inverse;
+  border-radius: $uni-border-radius-circle;
 }
 
-.text-primary {
-  color: #667eea;
+.u-text-primary-custom {
+  color: #ff6b9d;
 }
 
-.text-secondary {
-  color: #999;
-  font-size: 28rpx;
+.u-text-secondary-custom {
+  color: $uni-text-color-grey;
+  font-size: $uni-font-size-sm;
+}
+
+/* 自定义主题色 */
+:root {
+  --u-primary: #ff6b9d;
+  --u-success: #34c759;
+  --u-warning: #ff9500;
+  --u-error: #ff3b30;
+  --u-info: #007aff;
 }
 </style>

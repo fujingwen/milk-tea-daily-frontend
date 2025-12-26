@@ -1,181 +1,143 @@
 <template>
   <view class="modules-section">
     <!-- 今日打卡 -->
-    <SwipeableContainer
-      v-if="!isModuleGroupCompletelyHidden('dailyCheckIn')"
-      module-type="dailyCheckIn"
-      :is-hidden="false"
-      :on-hide="() => handleModuleHide('dailyCheckIn')"
-      :on-show="() => handleModuleShow('dailyCheckIn')"
-    >
-      <view class="module-group card">
+    <view class="module-group" v-if="!isModuleGroupCompletelyHidden('dailyCheckIn')">
+      <view class="group-card">
         <view class="group-header">
           <view class="group-title">
-            <text class="group-icon">✨</text>
-            <text class="group-name">今日打卡</text>
+            <text class="title-text">✨ 今日打卡</text>
           </view>
           <view class="header-actions">
-            <view class="checkin-status">
-              <text class="status-text"
-                >{{ getTodayCheckInCount }}/{{
-                  dailyCheckInModules.length
-                }}</text
-              >
-            </view>
-            <view
-              class="hide-btn"
-              @click.stop="handleModuleHideWithConfirm('dailyCheckIn')"
-            >
-              <text class="hide-icon">✕</text>
+            <text class="count-text">{{ getTodayCheckInCount }}/{{ dailyCheckInModules.length }}</text>
+            <view class="hide-button" @click.stop="handleModuleHideWithConfirm('dailyCheckIn')">
+              <text class="hide-text">✕</text>
             </view>
           </view>
         </view>
-        <view class="modules-grid checkin-grid">
+
+        <view class="module-grid">
           <view
-            class="module-item"
-            :class="{ checked: isTodayChecked(type) }"
             v-for="type in dailyCheckInModules"
             :key="type"
+            class="module-item"
+            :class="{ checked: isTodayChecked(type) }"
             @click="goToAddRecord(type)"
           >
             <view
               class="module-icon"
               :style="{ backgroundColor: getModuleConfig(type).color }"
             >
-              <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
-              <view v-if="isTodayChecked(type)" class="check-badge">✓</view>
+              <text class="icon-text">{{ getModuleConfig(type).icon }}</text>
+              <view v-if="isTodayChecked(type)" class="check-badge">
+                <text class="check-text">✓</text>
+              </view>
             </view>
-            <text class="module-name">{{ getModuleConfig(type).name }}</text>
+            <text class="module-name" :class="{ checked: isTodayChecked(type) }">
+              {{ getModuleConfig(type).name }}
+            </text>
           </view>
         </view>
       </view>
-    </SwipeableContainer>
+    </view>
 
-    <!-- 其他模块分组 -->
-    <SwipeableContainer
-      v-if="!isModuleGroupCompletelyHidden('lifeRecord')"
-      module-type="lifeRecord"
-      :is-hidden="false"
-      :on-hide="() => handleModuleHide('lifeRecord')"
-      :on-show="() => handleModuleShow('lifeRecord')"
-    >
-      <view class="module-group card">
+    <!-- 生活记录 -->
+    <view class="module-group" v-if="!isModuleGroupCompletelyHidden('lifeRecord')">
+      <view class="group-card">
         <view class="group-header">
           <view class="group-title">
-            <text class="group-icon">📋</text>
-            <text class="group-name">生活记录</text>
+            <text class="title-text">📋 生活记录</text>
           </view>
           <view class="header-actions">
-            <view
-              class="hide-btn"
-              @click.stop="handleModuleHideWithConfirm('lifeRecord')"
-            >
-              <text class="hide-icon">✕</text>
+            <view class="hide-button" @click.stop="handleModuleHideWithConfirm('lifeRecord')">
+              <text class="hide-text">✕</text>
             </view>
           </view>
         </view>
-        <view class="modules-grid">
+
+        <view class="module-grid">
           <view
-            class="module-item"
             v-for="type in lifeRecordModules"
             :key="type"
+            class="module-item"
             @click="goToAddRecord(type)"
           >
             <view
               class="module-icon"
               :style="{ backgroundColor: getModuleConfig(type).color }"
             >
-              <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+              <text class="icon-text">{{ getModuleConfig(type).icon }}</text>
             </view>
             <text class="module-name">{{ getModuleConfig(type).name }}</text>
           </view>
         </view>
       </view>
-    </SwipeableContainer>
+    </view>
 
     <!-- 美食相关 -->
-    <SwipeableContainer
-      v-if="!isModuleGroupCompletelyHidden('foodRelated')"
-      module-type="foodRelated"
-      :is-hidden="false"
-      :on-hide="() => handleModuleHide('foodRelated')"
-      :on-show="() => handleModuleShow('foodRelated')"
-    >
-      <view class="module-group card">
+    <view class="module-group" v-if="!isModuleGroupCompletelyHidden('foodRelated')">
+      <view class="group-card">
         <view class="group-header">
           <view class="group-title">
-            <text class="group-icon">🍽️</text>
-            <text class="group-name">美食相关</text>
+            <text class="title-text">🍽️ 美食相关</text>
           </view>
           <view class="header-actions">
-            <view
-              class="hide-btn"
-              @click.stop="handleModuleHideWithConfirm('foodRelated')"
-            >
-              <text class="hide-icon">✕</text>
+            <view class="hide-button" @click.stop="handleModuleHideWithConfirm('foodRelated')">
+              <text class="hide-text">✕</text>
             </view>
           </view>
         </view>
-        <view class="modules-grid">
+
+        <view class="module-grid">
           <view
-            class="module-item"
             v-for="type in foodRelatedModules"
             :key="type"
+            class="module-item"
             @click="goToAddRecord(type)"
           >
             <view
               class="module-icon"
               :style="{ backgroundColor: getModuleConfig(type).color }"
             >
-              <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+              <text class="icon-text">{{ getModuleConfig(type).icon }}</text>
             </view>
             <text class="module-name">{{ getModuleConfig(type).name }}</text>
           </view>
         </view>
       </view>
-    </SwipeableContainer>
+    </view>
 
     <!-- 计划提醒 -->
-    <SwipeableContainer
-      v-if="!isModuleGroupCompletelyHidden('planReminder')"
-      module-type="planReminder"
-      :is-hidden="false"
-      :on-hide="() => handleModuleHide('planReminder')"
-      :on-show="() => handleModuleShow('planReminder')"
-    >
-      <view class="module-group card">
+    <view class="module-group" v-if="!isModuleGroupCompletelyHidden('planReminder')">
+      <view class="group-card">
         <view class="group-header">
           <view class="group-title">
-            <text class="group-icon">📅</text>
-            <text class="group-name">计划提醒</text>
+            <text class="title-text">📅 计划提醒</text>
           </view>
           <view class="header-actions">
-            <view
-              class="hide-btn"
-              @click.stop="handleModuleHideWithConfirm('planReminder')"
-            >
-              <text class="hide-icon">✕</text>
+            <view class="hide-button" @click.stop="handleModuleHideWithConfirm('planReminder')">
+              <text class="hide-text">✕</text>
             </view>
           </view>
         </view>
-        <view class="modules-grid">
+
+        <view class="module-grid">
           <view
-            class="module-item"
             v-for="type in planReminderModules"
             :key="type"
+            class="module-item"
             @click="goToAddRecord(type)"
           >
             <view
               class="module-icon"
               :style="{ backgroundColor: getModuleConfig(type).color }"
             >
-              <text class="icon-emoji">{{ getModuleConfig(type).icon }}</text>
+              <text class="icon-text">{{ getModuleConfig(type).icon }}</text>
             </view>
             <text class="module-name">{{ getModuleConfig(type).name }}</text>
           </view>
         </view>
       </view>
-    </SwipeableContainer>
+    </view>
 
     <!-- 隐藏模块的悬浮按钮 -->
     <template
@@ -207,7 +169,6 @@
 import { computed } from "vue";
 import { MODULE_CONFIG, MODULE_GROUPS } from "@/utils/constants";
 import { getTodayRange } from "@/utils";
-import SwipeableContainer from "@/components/SwipeableContainer.vue";
 import FloatingButton from "@/components/FloatingButton.vue";
 import ShowAllModulesButton from "@/components/ShowAllModulesButton.vue";
 import { vibrate } from "@/utils/hapticFeedback.js";
@@ -288,6 +249,14 @@ const handleModuleHide = async (groupKey) => {
   emit("module-hide", groupKey);
 };
 
+const handleModuleShow = async (groupKey) => {
+  emit("module-show", groupKey);
+};
+
+const handleShowAllModules = async () => {
+  emit("show-all-modules");
+};
+
 const handleModuleHideWithConfirm = async (groupKey) => {
   try {
     vibrate.light();
@@ -325,26 +294,20 @@ const handleModuleHideWithConfirm = async (groupKey) => {
     });
   }
 };
-
-const handleModuleShow = async (groupKey) => {
-  emit("module-show", groupKey);
-};
-
-const handleShowAllModules = async () => {
-  emit("show-all-modules");
-};
 </script>
 
 <style lang="scss" scoped>
 .modules-section {
-  padding: 0 20rpx;
-  margin-bottom: 20rpx;
+  padding: 0 20rpx 20rpx 20rpx;
 
   .module-group {
     margin-bottom: 20rpx;
 
-    &:last-child {
-      margin-bottom: 0;
+    .group-card {
+      background: white;
+      border-radius: 20rpx;
+      padding: 24rpx;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
     }
 
     .group-header {
@@ -354,15 +317,7 @@ const handleShowAllModules = async () => {
       margin-bottom: 20rpx;
 
       .group-title {
-        display: flex;
-        align-items: center;
-        gap: 8rpx;
-
-        .group-icon {
-          font-size: 28rpx;
-        }
-
-        .group-name {
+        .title-text {
           font-size: 30rpx;
           font-weight: bold;
           color: #333;
@@ -374,55 +329,37 @@ const handleShowAllModules = async () => {
         align-items: center;
         gap: 16rpx;
 
-        .checkin-status {
-          .status-text {
-            font-size: 24rpx;
-            color: #667eea;
-            font-weight: 500;
-          }
+        .count-text {
+          font-size: 24rpx;
+          color: #ff6b9d;
+          font-weight: bold;
         }
 
-        .hide-btn {
+        .hide-button {
           width: 56rpx;
           height: 56rpx;
+          border-radius: 50%;
+          border: 2rpx solid #ff3b30;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(255, 107, 157, 0.1);
-          border-radius: 50%;
-          transition: all 0.3s;
-          cursor: pointer;
 
-          &:hover {
-            background: rgba(255, 107, 157, 0.2);
-            transform: scale(1.1);
-          }
-
-          &:active {
-            transform: scale(0.9);
-            background: rgba(255, 107, 157, 0.3);
-          }
-
-          .hide-icon {
+          .hide-text {
             font-size: 20rpx;
-            color: #ff6b9d;
+            color: #ff3b30;
             font-weight: bold;
-            transition: all 0.3s;
           }
         }
       }
     }
 
-    .modules-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
+    .module-grid {
+      display: flex;
+      flex-wrap: wrap;
       gap: 16rpx;
 
-      &.checkin-grid {
-        grid-template-columns: repeat(5, 1fr);
-      }
-
       .module-item {
+        width: calc((100% - 64rpx) / 5);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -433,10 +370,6 @@ const handleShowAllModules = async () => {
 
         &.checked {
           background: rgba(102, 126, 234, 0.1);
-
-          .module-name {
-            color: #667eea;
-          }
         }
 
         &:active {
@@ -453,7 +386,7 @@ const handleShowAllModules = async () => {
           margin-bottom: 10rpx;
           position: relative;
 
-          .icon-emoji {
+          .icon-text {
             font-size: 32rpx;
           }
 
@@ -461,16 +394,19 @@ const handleShowAllModules = async () => {
             position: absolute;
             top: -8rpx;
             right: -8rpx;
-            width: 28rpx;
-            height: 28rpx;
-            background: #34c759;
-            color: white;
+            width: 24rpx;
+            height: 24rpx;
             border-radius: 50%;
-            font-size: 18rpx;
+            background: #34c759;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+
+            .check-text {
+              font-size: 16rpx;
+              color: white;
+              font-weight: bold;
+            }
           }
         }
 
@@ -478,41 +414,9 @@ const handleShowAllModules = async () => {
           font-size: 22rpx;
           color: #333;
           text-align: center;
-          line-height: 1.3;
-        }
-      }
-    }
-  }
-}
 
-.card {
-  background: white;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-}
-
-// 响应式设计 - 小屏幕适配
-@media (max-width: 750rpx) {
-  .modules-section {
-    .module-group {
-      .group-header {
-        .header-actions {
-          gap: 12rpx;
-
-          .hide-btn {
-            width: 48rpx;
-            height: 48rpx;
-
-            .hide-icon {
-              font-size: 18rpx;
-            }
-          }
-
-          .checkin-status {
-            .status-text {
-              font-size: 22rpx;
-            }
+          &.checked {
+            color: #667eea;
           }
         }
       }

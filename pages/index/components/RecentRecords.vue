@@ -5,9 +5,9 @@
       <text class="section-more" @click="goToRecordList">查看全部</text>
     </view>
 
-    <view class="record-list">
+    <view class="record-list" v-if="recentRecords.length > 0">
       <view
-        class="record-item card"
+        class="record-item"
         v-for="record in recentRecords"
         :key="record.recordId"
         @click="goToRecordDetail(record)"
@@ -25,7 +25,7 @@
       </view>
     </view>
 
-    <view v-if="recentRecords.length === 0" class="empty-state">
+    <view v-else class="empty-state">
       <text class="empty-text">暂无记录，开始记录你的生活吧～</text>
     </view>
   </view>
@@ -110,42 +110,48 @@ const goToRecordList = () => {
     }
   }
 
-  .record-item {
-    margin-bottom: 16rpx;
+  .record-list {
+    .record-item {
+      background: white;
+      border-radius: 20rpx;
+      padding: 24rpx;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+      margin-bottom: 16rpx;
 
-    .record-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12rpx;
-
-      .record-module {
+      .record-header {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 8rpx;
+        margin-bottom: 12rpx;
 
-        .module-emoji {
+        .record-module {
+          display: flex;
+          align-items: center;
+          gap: 8rpx;
+
+          .module-emoji {
+            font-size: 24rpx;
+          }
+
+          .module-text {
+            font-size: 28rpx;
+            color: #333;
+            font-weight: 500;
+          }
+        }
+
+        .record-time {
           font-size: 24rpx;
+          color: #999;
         }
+      }
 
-        .module-text {
+      .record-content {
+        .content-text {
           font-size: 28rpx;
-          color: #333;
-          font-weight: 500;
+          color: #666;
+          line-height: 1.4;
         }
-      }
-
-      .record-time {
-        font-size: 24rpx;
-        color: #999;
-      }
-    }
-
-    .record-content {
-      .content-text {
-        font-size: 28rpx;
-        color: #666;
-        line-height: 1.4;
       }
     }
   }
@@ -159,12 +165,5 @@ const goToRecordList = () => {
       color: #999;
     }
   }
-}
-
-.card {
-  background: white;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 </style>

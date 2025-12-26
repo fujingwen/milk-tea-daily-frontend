@@ -1,4 +1,10 @@
 {
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^u-(.*)": "@/uni_modules/uview-plus/components/u-$1/u-$1.vue"
+    }
+  },
   "pages": [
     {
       "path": "pages/index/index",
@@ -109,6 +115,12 @@
         "iconPath": "static/tab-calendar.svg",
         "selectedIconPath": "static/tab-calendar-current.svg",
         "text": "日历"
+      },
+      {
+        "pagePath": "pages/record/add",
+        "iconPath": "static/tab-add.svg",
+        "selectedIconPath": "static/tab-add-current.svg",
+        "text": "记录"
       },
       {
         "pagePath": "pages/modules/modules",

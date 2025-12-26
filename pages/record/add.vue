@@ -3,7 +3,22 @@
     <view class="form-container">
       <!-- 模块选择（仅在未指定类型时显示） -->
       <view class="form-section card" v-if="!isDirectMode">
-        <view class="section-title">选择记录类型</view>
+        <view class="section-title">快速记录</view>
+
+        <!-- 快速笔记入口 -->
+        <view class="quick-note-section">
+          <view class="quick-note-card" @click="selectModule('essay')">
+            <view class="note-icon">📝</view>
+            <view class="note-content">
+              <text class="note-title">写笔记</text>
+              <text class="note-desc">记录今天的想法和感受</text>
+            </view>
+            <view class="note-arrow">→</view>
+          </view>
+        </view>
+
+        <!-- 其他常用记录 -->
+        <view class="section-subtitle">其他记录类型</view>
         <view class="module-selector">
           <view
             class="module-option"
@@ -297,61 +312,69 @@
                 <text class="label-icon">🏷️</text>
                 今日关键字
               </text>
-              <view class="keyword-input-wrapper">
-                <input
-                  class="keyword-input"
-                  v-model="formData.keywordInput"
-                  placeholder="输入关键字后点击添加"
-                  @confirm="addKeyword"
-                />
-                <button
-                  class="add-keyword-btn"
-                  @click="addKeyword"
-                  :disabled="!formData.keywordInput?.trim()"
-                >
-                  <text class="btn-icon">+</text>
-                  <text class="btn-text">添加</text>
-                </button>
+
+              <!-- 关键字输入区域 -->
+              <view class="keyword-input-area">
+                <view class="input-container">
+                  <input
+                    class="keyword-input"
+                    v-model="formData.keywordInput"
+                    placeholder="输入关键字..."
+                    @confirm="addKeyword"
+                  />
+                  <view
+                    class="add-btn"
+                    :class="{ disabled: !formData.keywordInput?.trim() }"
+                    @click="addKeyword"
+                  >
+                    <text class="add-icon">+</text>
+                  </view>
+                </view>
               </view>
 
               <!-- 已添加的关键字 -->
               <view
-                class="keywords-list"
+                class="added-keywords"
                 v-if="formData.keywords && formData.keywords.length > 0"
               >
-                <text class="keywords-title">已添加 ({{ formData.keywords.length }})</text>
-                <view class="keywords-container">
+                <view class="keywords-header">
+                  <text class="keywords-count">已添加 {{ formData.keywords.length }} 个关键字</text>
+                </view>
+                <view class="keywords-grid">
                   <view
                     v-for="(keyword, index) in formData.keywords"
                     :key="index"
-                    class="keyword-tag"
+                    class="keyword-chip"
                   >
-                    <text class="keyword-text">{{ keyword }}</text>
-                    <view class="keyword-remove" @click="removeKeyword(index)">
+                    <text class="chip-text">{{ keyword }}</text>
+                    <view class="chip-remove" @click="removeKeyword(index)">
                       <text class="remove-icon">×</text>
                     </view>
                   </view>
                 </view>
               </view>
 
-              <!-- 常用关键字建议 -->
+              <!-- 推荐关键字 -->
               <view class="keyword-suggestions">
-                <text class="suggestion-title">
-                  <text class="suggestion-icon">💡</text>
-                  常用关键字
-                </text>
-                <view class="suggestion-tags">
+                <view class="suggestions-header">
+                  <text class="suggestions-title">
+                    <text class="title-icon">💡</text>
+                    推荐关键字
+                  </text>
+                  <text class="suggestions-subtitle">点击快速添加</text>
+                </view>
+                <view class="suggestions-grid">
                   <view
                     v-for="suggestion in keywordSuggestions"
                     :key="suggestion"
-                    class="suggestion-tag"
-                    :class="{ 'selected': formData.keywords.includes(suggestion) }"
+                    class="suggestion-chip"
+                    :class="{ 'added': formData.keywords.includes(suggestion) }"
                     @click="addSuggestionKeyword(suggestion)"
                   >
-                    <text class="tag-text">{{ suggestion }}</text>
+                    <text class="suggestion-text">{{ suggestion }}</text>
                     <text
                       v-if="formData.keywords.includes(suggestion)"
-                      class="tag-check"
+                      class="suggestion-check"
                     >✓</text>
                   </view>
                 </view>
@@ -432,6 +455,64 @@
               maxlength="200"
               count
             />
+          </view>
+        </template>
+
+        <!-- 随笔记录表单 -->
+        <template v-if="currentModule === 'essay'">
+          <view class="essay-section">
+            <view class="form-item">
+              <text class="form-label">
+                <text class="label-icon">📝</text>
+                今日笔记
+              </text>
+              <u-textarea
+                v-model="formData.content"
+                placeholder="写下今天的想法、感受、收获或者任何想记录的事情..."
+                maxlength="1000"
+                count
+                class="essay-textarea"
+                :auto-height="true"
+                :min-height="200"
+              />
+            </view>
+
+            <view class="form-item">
+              <text class="form-label">
+                <text class="label-icon">🏷️</text>
+                标签
+              </text>
+              <view class="essay-tags">
+                <view
+                  v-for="tag in essayTagSuggestions"
+                  :key="tag"
+                  class="essay-tag"
+                  :class="{ active: formData.tags && formData.tags.includes(tag) }"
+                  @click="toggleEssayTag(tag)"
+                >
+                  <text class="tag-text">{{ tag }}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="form-item">
+              <text class="form-label">
+                <text class="label-icon">💭</text>
+                心情
+              </text>
+              <view class="mood-quick-select">
+                <view
+                  v-for="mood in quickMoodTypes"
+                  :key="mood.value"
+                  class="mood-quick-option"
+                  :class="{ active: formData.mood === mood.value }"
+                  @click="formData.mood = mood.value"
+                >
+                  <text class="mood-emoji">{{ mood.emoji }}</text>
+                  <text class="mood-label">{{ mood.label }}</text>
+                </view>
+              </view>
+            </view>
           </view>
         </template>
       </view>
@@ -586,6 +667,15 @@ const initFormData = (type) => {
         remark: "",
       };
       break;
+    case "essay":
+      formData.value = {
+        ...baseData,
+        content: "",
+        tags: [],
+        mood: "",
+        remark: "",
+      };
+      break;
     default:
       formData.value = baseData;
   }
@@ -610,6 +700,22 @@ const keywordSuggestions = [
   "成长", "挑战", "收获", "感恩", "反思", "计划"
 ];
 
+// 随笔标签建议
+const essayTagSuggestions = [
+  "日常", "感悟", "工作", "学习", "生活", "心情",
+  "思考", "成长", "回忆", "计划", "梦想", "感恩"
+];
+
+// 快速心情选择
+const quickMoodTypes = [
+  { value: 'happy', label: '开心', emoji: '😊' },
+  { value: 'calm', label: '平静', emoji: '😌' },
+  { value: 'excited', label: '兴奋', emoji: '🤩' },
+  { value: 'tired', label: '疲惫', emoji: '😴' },
+  { value: 'thoughtful', label: '深思', emoji: '🤔' },
+  { value: 'grateful', label: '感恩', emoji: '🙏' }
+];
+
 const addKeyword = () => {
   const keyword = formData.value.keywordInput?.trim();
   if (keyword && !formData.value.keywords.includes(keyword)) {
@@ -625,6 +731,19 @@ const removeKeyword = (index) => {
 const addSuggestionKeyword = (keyword) => {
   if (!formData.value.keywords.includes(keyword)) {
     formData.value.keywords.push(keyword);
+  }
+};
+
+// 随笔标签切换
+const toggleEssayTag = (tag) => {
+  if (!formData.value.tags) {
+    formData.value.tags = [];
+  }
+  const index = formData.value.tags.indexOf(tag);
+  if (index > -1) {
+    formData.value.tags.splice(index, 1);
+  } else {
+    formData.value.tags.push(tag);
   }
 };
 
@@ -705,6 +824,12 @@ const validateForm = () => {
         return false;
       }
       break;
+    case "essay":
+      if (!formData.value.content.trim()) {
+        showToast("请输入笔记内容", "none");
+        return false;
+      }
+      break;
   }
   return true;
 };
@@ -754,6 +879,11 @@ onMounted(() => {
         formData.value.mealType = options.mealType;
       }
     }
+  } else {
+    // 从底部导航栏进入，显示快速记录选择
+    uni.setNavigationBarTitle({
+      title: "快速记录",
+    });
   }
 });
 </script>
@@ -762,7 +892,7 @@ onMounted(() => {
 .add-record-page {
   min-height: 100vh;
   background: #f5f5f5;
-  padding-bottom: 120rpx;
+  padding-bottom: 200rpx; /* 增加底部内边距，为按钮和导航栏留出空间 */
 }
 
 .form-container {
@@ -777,6 +907,60 @@ onMounted(() => {
     font-weight: bold;
     color: #333;
     margin-bottom: 20rpx;
+  }
+
+  .section-subtitle {
+    font-size: 28rpx;
+    font-weight: 500;
+    color: #666;
+    margin: 30rpx 0 16rpx 0;
+  }
+}
+
+.quick-note-section {
+  margin-bottom: 30rpx;
+
+  .quick-note-card {
+    display: flex;
+    align-items: center;
+    padding: 24rpx;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 20rpx;
+    box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+    transition: all 0.3s;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .note-icon {
+      font-size: 48rpx;
+      margin-right: 20rpx;
+    }
+
+    .note-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6rpx;
+
+      .note-title {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: white;
+      }
+
+      .note-desc {
+        font-size: 24rpx;
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .note-arrow {
+      font-size: 32rpx;
+      color: white;
+      font-weight: bold;
+    }
   }
 }
 
@@ -947,7 +1131,7 @@ onMounted(() => {
 
 .action-buttons {
   position: fixed;
-  bottom: 0;
+  bottom: 100rpx; /* 调整为底部导航栏高度 + 一些间距 */
   left: 0;
   right: 0;
   background: white;
@@ -956,6 +1140,7 @@ onMounted(() => {
   gap: 20rpx;
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
   border-top: 1rpx solid #f0f0f0;
+  z-index: 999; /* 确保在其他元素之上 */
 
   .cancel-button,
   .save-button {
@@ -1069,12 +1254,13 @@ onMounted(() => {
   }
 }
 
-// 今日关键字样式优化
+// 今日关键字样式重新设计
 .keyword-section {
   .form-label {
     display: flex;
     align-items: center;
     gap: 8rpx;
+    margin-bottom: 24rpx;
 
     .label-icon {
       font-size: 24rpx;
@@ -1082,158 +1268,178 @@ onMounted(() => {
   }
 }
 
-.keyword-input-wrapper {
-  display: flex;
-  gap: 16rpx;
-  margin-bottom: 24rpx;
+.keyword-input-area {
+  margin-bottom: 32rpx;
 
-  .keyword-input {
-    flex: 1;
-    height: 80rpx;
-    padding: 0 24rpx;
-    background: #f8f9fa;
-    border: 2rpx solid #e9ecef;
-    border-radius: 16rpx;
-    font-size: 28rpx;
-    color: #333;
-    transition: all 0.3s;
-
-    &:focus {
-      border-color: #667eea;
-      background: #fff;
-      box-shadow: 0 0 0 4rpx rgba(102, 126, 234, 0.1);
-    }
-  }
-
-  .add-keyword-btn {
+  .input-container {
     display: flex;
     align-items: center;
-    gap: 8rpx;
-    padding: 0 24rpx;
-    height: 80rpx;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border: none;
-    border-radius: 16rpx;
-    font-size: 26rpx;
-    font-weight: 500;
-    transition: all 0.3s;
-    min-width: 120rpx;
-    justify-content: center;
+    background: #f8f9fa;
+    border: 2rpx solid #e9ecef;
+    border-radius: 24rpx;
+    padding: 8rpx;
+    transition: all 0.3s ease;
 
-    &:active {
-      transform: scale(0.95);
+    &:focus-within {
+      border-color: #667eea;
+      background: #fff;
+      box-shadow: 0 0 0 6rpx rgba(102, 126, 234, 0.1);
     }
 
-    &:disabled {
-      background: #e9ecef;
-      color: #6c757d;
-      transform: none;
-    }
-
-    .btn-icon {
+    .keyword-input {
+      flex: 1;
+      height: 64rpx;
+      padding: 0 20rpx;
+      background: transparent;
+      border: none;
       font-size: 28rpx;
-      font-weight: bold;
+      color: #333;
+      outline: none;
+
+      &::placeholder {
+        color: #999;
+      }
     }
 
-    .btn-text {
-      font-size: 26rpx;
+    .add-btn {
+      width: 64rpx;
+      height: 64rpx;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+
+      &:active:not(.disabled) {
+        transform: scale(0.95);
+      }
+
+      &.disabled {
+        background: #e9ecef;
+        cursor: not-allowed;
+
+        .add-icon {
+          color: #adb5bd;
+        }
+      }
+
+      .add-icon {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: white;
+      }
     }
   }
 }
 
-.keywords-list {
+.added-keywords {
   margin-bottom: 32rpx;
 
-  .keywords-title {
-    display: block;
-    font-size: 24rpx;
-    color: #667eea;
-    font-weight: 500;
+  .keywords-header {
     margin-bottom: 16rpx;
+
+    .keywords-count {
+      font-size: 26rpx;
+      color: #667eea;
+      font-weight: 600;
+    }
   }
 
-  .keywords-container {
+  .keywords-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 12rpx;
-  }
 
-  .keyword-tag {
-    display: flex;
-    align-items: center;
-    gap: 8rpx;
-    padding: 12rpx 16rpx;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 24rpx;
-    box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.2);
-    transition: all 0.3s;
-
-    &:active {
-      transform: scale(0.95);
-    }
-
-    .keyword-text {
-      font-size: 26rpx;
-      color: white;
-      font-weight: 500;
-    }
-
-    .keyword-remove {
-      width: 32rpx;
-      height: 32rpx;
+    .keyword-chip {
       display: flex;
       align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      transition: all 0.3s;
+      gap: 8rpx;
+      padding: 12rpx 16rpx;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 20rpx;
+      box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.25);
+      transition: all 0.3s ease;
 
       &:active {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(0.9);
+        transform: translateY(2rpx);
+        box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.25);
       }
 
-      .remove-icon {
-        font-size: 24rpx;
+      .chip-text {
+        font-size: 26rpx;
         color: white;
-        font-weight: bold;
+        font-weight: 500;
+      }
+
+      .chip-remove {
+        width: 28rpx;
+        height: 28rpx;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+
+        &:active {
+          background: rgba(255, 255, 255, 0.3);
+          transform: scale(0.9);
+        }
+
+        .remove-icon {
+          font-size: 20rpx;
+          color: white;
+          font-weight: bold;
+        }
       }
     }
   }
 }
 
 .keyword-suggestions {
-  .suggestion-title {
+  .suggestions-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8rpx;
-    font-size: 26rpx;
-    color: #495057;
-    font-weight: 500;
-    margin-bottom: 16rpx;
+    margin-bottom: 20rpx;
 
-    .suggestion-icon {
+    .suggestions-title {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      font-size: 26rpx;
+      color: #495057;
+      font-weight: 600;
+
+      .title-icon {
+        font-size: 22rpx;
+      }
+    }
+
+    .suggestions-subtitle {
       font-size: 22rpx;
+      color: #adb5bd;
     }
   }
 
-  .suggestion-tags {
+  .suggestions-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 12rpx;
 
-    .suggestion-tag {
+    .suggestion-chip {
       display: flex;
       align-items: center;
       gap: 6rpx;
-      padding: 10rpx 16rpx;
-      background: #f8f9fa;
+      padding: 12rpx 18rpx;
+      background: #fff;
       border: 2rpx solid #e9ecef;
-      border-radius: 24rpx;
+      border-radius: 20rpx;
       font-size: 24rpx;
       color: #495057;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       cursor: pointer;
       position: relative;
       overflow: hidden;
@@ -1246,53 +1452,47 @@ onMounted(() => {
         width: 100%;
         height: 100%;
         background: linear-gradient(135deg, #667eea, #764ba2);
-        transition: left 0.3s;
+        transition: left 0.3s ease;
         z-index: 0;
       }
 
-      &:active:not(.selected) {
+      &:active:not(.added) {
         transform: scale(0.95);
 
         &::before {
           left: 0;
         }
 
-        .tag-text {
+        .suggestion-text {
           color: white;
-          position: relative;
-          z-index: 1;
         }
       }
 
-      &.selected {
+      &.added {
         background: linear-gradient(135deg, #28a745, #20c997);
         border-color: #28a745;
         color: white;
-        cursor: not-allowed;
+        cursor: default;
 
-        .tag-text {
+        .suggestion-text {
           color: white;
-          position: relative;
-          z-index: 1;
         }
 
-        .tag-check {
+        .suggestion-check {
           color: white;
           font-weight: bold;
-          position: relative;
-          z-index: 1;
         }
       }
 
-      .tag-text {
+      .suggestion-text {
         font-size: 24rpx;
         font-weight: 500;
         position: relative;
         z-index: 1;
-        transition: color 0.3s;
+        transition: color 0.3s ease;
       }
 
-      .tag-check {
+      .suggestion-check {
         font-size: 20rpx;
         font-weight: bold;
         position: relative;
@@ -1344,6 +1544,95 @@ onMounted(() => {
     }
 
     .exercise-label {
+      font-size: 22rpx;
+      color: #333;
+    }
+  }
+}
+
+// 随笔记录样式
+.essay-section {
+  .form-label {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+
+    .label-icon {
+      font-size: 24rpx;
+    }
+  }
+}
+
+.essay-textarea {
+  background: #f8f9fa;
+  border: 2rpx solid #e9ecef;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  transition: all 0.3s;
+
+  &:focus {
+    border-color: #667eea;
+    background: #fff;
+    box-shadow: 0 0 0 4rpx rgba(102, 126, 234, 0.1);
+  }
+}
+
+.essay-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+
+  .essay-tag {
+    padding: 12rpx 20rpx;
+    border-radius: 20rpx;
+    border: 2rpx solid #e9ecef;
+    background: #f8f9fa;
+    transition: all 0.3s;
+
+    &.active {
+      border-color: #667eea;
+      background: #667eea;
+
+      .tag-text {
+        color: white;
+      }
+    }
+
+    .tag-text {
+      font-size: 24rpx;
+      color: #333;
+    }
+  }
+}
+
+.mood-quick-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+
+  .mood-quick-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16rpx;
+    border-radius: 12rpx;
+    border: 2rpx solid #eee;
+    transition: all 0.3s;
+    min-width: 100rpx;
+
+    &.active {
+      border-color: #ff6b9d;
+      background: rgba(255, 107, 157, 0.1);
+    }
+
+    .mood-emoji {
+      font-size: 28rpx;
+      margin-bottom: 6rpx;
+    }
+
+    .mood-label {
       font-size: 22rpx;
       color: #333;
     }

@@ -1,5 +1,6 @@
 import { createSSRApp } from 'vue'
 import { createPinia } from 'pinia'
+import uView from '@/uni_modules/uview-plus'
 import App from './App.vue'
 import { initStorage } from '@/utils/storageManager.js'
 
@@ -8,6 +9,7 @@ export function createApp() {
   const pinia = createPinia()
 
   app.use(pinia)
+  app.use(uView)
 
   // 初始化存储管理器
   initStorage().catch(error => {

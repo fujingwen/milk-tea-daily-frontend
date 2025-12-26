@@ -1,8 +1,5 @@
 <template>
   <view class="index-page">
-    <!-- 顶部搜索 -->
-    <!-- <SearchHeader /> -->
-
     <!-- 今日提醒模块 -->
     <TodayReminders
       :weather-info="weatherInfo"
@@ -26,12 +23,34 @@
     <RecentRecords :records="recordStore.records" />
 
     <!-- 待办事项完成确认弹窗 -->
-    <TodoCompleteModal
-      :visible="showCompleteModal"
-      :todo="currentTodo"
-      @close="closeCompleteModal"
+    <u-modal
+      v-model="showCompleteModal"
+      title="完成待办事项"
+      :show-cancel-button="true"
+      confirm-text="确认完成"
+      cancel-text="取消"
       @confirm="confirmComplete"
-    />
+      @cancel="closeCompleteModal"
+    >
+      <view class="modal-content">
+        <view class="todo-info" v-if="currentTodo">
+          <u-text :text="currentTodo.content" type="primary" size="16"></u-text>
+        </view>
+        <view class="remark-section">
+          <u-text text="完成备注（可选）" size="14" color="#666"></u-text>
+          <u-input
+            v-model="completeRemark"
+            type="textarea"
+            placeholder="添加完成备注..."
+            :maxlength="100"
+            :show-word-limit="true"
+            :auto-height="true"
+            border="surround"
+            style="margin-top: 10rpx;"
+          ></u-input>
+        </view>
+      </view>
+    </u-modal>
   </view>
 </template>
 
@@ -43,11 +62,9 @@ import reminderService from "@/utils/reminderService.js";
 import { vibrate } from "@/utils/hapticFeedback.js";
 
 // 导入组件
-import SearchHeader from "./components/SearchHeader.vue";
 import TodayReminders from "./components/TodayReminders.vue";
 import ModuleGroups from "./components/ModuleGroups.vue";
 import RecentRecords from "./components/RecentRecords.vue";
-import TodoCompleteModal from "./components/TodoCompleteModal.vue";
 
 const recordStore = useRecordStore();
 const appStore = useAppStore();
@@ -63,6 +80,7 @@ const menstruationReminder = ref(null);
 // 待办事项完成相关数据
 const showCompleteModal = ref(false);
 const currentTodo = ref(null);
+const completeRemark = ref('');
 
 // 加载提醒数据
 const loadReminders = async () => {
@@ -97,9 +115,10 @@ const handleTodoComplete = (todo) => {
 const closeCompleteModal = () => {
   showCompleteModal.value = false;
   currentTodo.value = null;
+  completeRemark.value = '';
 };
 
-const confirmComplete = async (remark) => {
+const confirmComplete = async () => {
   try {
     if (!currentTodo.value) return;
 
@@ -108,7 +127,7 @@ const confirmComplete = async (remark) => {
     // 更新待办事项状态
     const success = recordStore.updateRecord(currentTodo.value.recordId, {
       isCompleted: true,
-      completeRemark: remark,
+      completeRemark: completeRemark.value.trim(),
       completeTime: Date.now()
     });
 
@@ -180,19 +199,56 @@ const handleShowAllModules = async () => {
 
 // 生命周期
 onMounted(async () => {
-  recordStore.loadFromStorage();
-  appStore.loadUserData();
+  console.log('首页开始加载...')
+
+  recordStore.loadFromStorage()
+  appStore.loadUserData()
 
   // 初始化模块可见性状态
-  await moduleVisibilityStore.loadFromStorage();
+  await moduleVisibilityStore.loadFromStorage()
 
-  await loadReminders();
+  console.log('记录数据:', recordStore.records.length)
+  console.log('模块可见性状态:', moduleVisibilityStore.hiddenModulesCount)
+
+  // 如果没有数据，强制初始化mock数据
+  if (recordStore.records.length === 0) {
+    console.log('没有记录数据，初始化mock数据...')
+    const { initMockData } = await import('@/mock/index.js')
+    initMockData()
+    recordStore.loadFromStorage()
+    console.log('Mock数据初始化完成，记录数量:', recordStore.records.length)
+  }
+
+  await loadReminders()
+
+  console.log('提醒数据加载完成:', {
+    weather: weatherInfo.value,
+    holidays: upcomingHolidays.value.length,
+    birthdays: upcomingBirthdays.value.length,
+    todos: pendingTodos.value.length,
+    menstruation: menstruationReminder.value
+  })
 });
 </script>
 
 <style lang="scss" scoped>
 .index-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: $uni-bg-color-grey;
+}
+
+.modal-content {
+  padding: 20rpx;
+
+  .todo-info {
+    margin-bottom: 20rpx;
+    padding: 16rpx;
+    background: $uni-bg-color-grey;
+    border-radius: $uni-border-radius-lg;
+  }
+
+  .remark-section {
+    margin-top: 20rpx;
+  }
 }
 </style>
