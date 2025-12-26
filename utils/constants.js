@@ -73,11 +73,11 @@ export const MODULE_CONFIG = {
     fields: ['exerciseType', 'duration', 'calories', 'distance', 'remark']
   },
   [MODULE_TYPES.WISH]: {
-    name: '购物心愿',
+    name: '买买买',
     icon: '🛍️',
     color: '#ff3b30',
     group: 'lifeRecord',
-    fields: ['productName', 'price', 'priority', 'isBought', 'link', 'remark']
+    fields: ['productName', 'price', 'priority', 'status', 'link', 'remark']
   },
   [MODULE_TYPES.MENSTRUATION]: {
     name: '姨妈记录',
@@ -391,4 +391,18 @@ export const CHINESE_HOLIDAYS = [
   { name: '清明节', date: '04-05', type: 'lunar', holiday: true, emoji: '🌿', year: 2026 },
   { name: '端午节', date: '06-19', type: 'lunar', holiday: true, emoji: '🐲', year: 2026 },
   { name: '中秋节', date: '09-25', type: 'lunar', holiday: true, emoji: '🥮', year: 2026 }
+]
+
+// 买买买优先级类型
+export const SHOPPING_PRIORITY_TYPES = [
+  { value: 'must_buy', label: '早晚要买', emoji: '🔥', color: '#ff3b30' },
+  { value: 'consider', label: '纠结一下', emoji: '🤔', color: '#ff9500' },
+  { value: 'just_look', label: '我就看看', emoji: '👀', color: '#34c759' }
+]
+
+// 买买买状态类型
+export const SHOPPING_STATUS_TYPES = [
+  { value: 'pending', label: '待购买', emoji: '⏳', color: '#007aff' },
+  { value: 'bought', label: '已买', emoji: '✅', color: '#34c759' },
+  { value: 'cancelled', label: '不买了', emoji: '❌', color: '#8e8e93' }
 ]

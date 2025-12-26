@@ -241,6 +241,10 @@ const goToAddRecord = (moduleType) => {
     uni.navigateTo({
       url: "/pages/recipe/list",
     });
+  } else if (moduleType === "wish") {
+    uni.navigateTo({
+      url: "/pages/shopping/list",
+    });
   } else {
     // 对于非tabbar页面，使用navigateTo跳转
     uni.setStorageSync('addRecordType', moduleType);

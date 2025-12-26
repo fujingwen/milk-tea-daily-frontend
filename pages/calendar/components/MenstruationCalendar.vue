@@ -533,28 +533,7 @@ const getDateCellClasses = (date) => {
     classes.push("selected");
   }
 
-  // 周末标记
-  if (isWeekend(date)) {
-    classes.push("weekend");
-    // 周六
-    if (date.getDay() === 6) {
-      classes.push("saturday");
-    }
-    // 周日
-    else if (date.getDay() === 0) {
-      classes.push("sunday");
-    }
-  }
-
-  // 节假日标记
-  if (isHoliday(date)) {
-    classes.push("holiday");
-  }
-
-  // 周末工作日标记
-  if (isWeekendWorkday(date)) {
-    classes.push("weekend-workday");
-  }
+  // 月经日历页面不需要标注周六周日放假上班
 
   // 经期相关
   if (isMenstruationDate(date)) {

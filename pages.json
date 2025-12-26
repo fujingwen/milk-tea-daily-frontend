@@ -74,6 +74,12 @@
       }
     },
     {
+      "path": "pages/shopping/list",
+      "style": {
+        "navigationBarTitleText": "买买买"
+      }
+    },
+    {
       "path": "pages/food/recommend",
       "style": {
         "navigationBarTitleText": "今天吃什么"

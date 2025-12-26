@@ -119,6 +119,13 @@
           @update:form-data="updateFormData"
         />
 
+        <!-- 买买买表单 -->
+        <ShoppingForm
+          v-else-if="currentModule === 'wish'"
+          :initial-data="formData"
+          @submit="handleSubmit"
+        />
+
         <!-- 通用描述字段（如果表单组件中没有包含） -->
         <view class="form-item" v-if="showDescription">
           <text class="form-label">详细描述</text>
@@ -175,6 +182,7 @@ import FoodForm from "./components/FoodForm.vue";
 import ExerciseForm from "./components/ExerciseForm.vue";
 import EssayForm from "./components/EssayForm.vue";
 import MenstruationForm from "./components/MenstruationForm.vue";
+import ShoppingForm from "./components/ShoppingForm.vue";
 
 const recordStore = useRecordStore();
 

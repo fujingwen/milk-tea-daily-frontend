@@ -3,6 +3,7 @@
     <!-- 今日提醒模块 -->
     <TodayReminders
       :weather-info="weatherInfo"
+      :daily-quote="dailyQuote"
       :menstruation-reminder="menstruationReminder"
       :pending-todos="pendingTodos"
       :upcoming-birthdays="upcomingBirthdays"
@@ -72,6 +73,7 @@ const moduleVisibilityStore = useModuleVisibilityStore();
 
 // 响应式数据
 const weatherInfo = ref(null);
+const dailyQuote = ref('');
 const upcomingHolidays = ref([]);
 const upcomingBirthdays = ref([]);
 const pendingTodos = ref([]);
@@ -87,6 +89,9 @@ const loadReminders = async () => {
   try {
     // 获取天气信息
     weatherInfo.value = await reminderService.getWeatherInfo();
+
+    // 获取今日语录
+    dailyQuote.value = reminderService.getDailyQuote();
 
     // 获取节日提醒
     upcomingHolidays.value = reminderService.getUpcomingHolidays();

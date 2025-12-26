@@ -7,15 +7,29 @@
           <text class="header-icon">📋</text>
           <text class="header-title">今日提醒</text>
         </view>
-        <text class="header-date">{{ formatDate(Date.now(), 'YYYY年MM月DD日') }}</text>
+        <text class="header-date">{{
+          formatDate(Date.now(), "YYYY年MM月DD日")
+        }}</text>
       </view>
 
-      <!-- 天气信息 -->
+      <!-- 天气信息和今日语录 -->
       <view class="weather-card" v-if="weatherInfo">
-        <text class="weather-icon">{{ weatherInfo.emoji }}</text>
-        <view class="weather-content">
-          <text class="weather-temp">{{ weatherInfo.desc }} {{ weatherInfo.temp }}</text>
-          <text class="weather-desc">{{ weatherInfo.tip }}</text>
+        <!-- 天气信息行 -->
+        <view class="weather-row">
+          <text class="weather-icon">{{ weatherInfo.emoji }}</text>
+          <view class="weather-content">
+            <text class="weather-temp">{{ weatherInfo.desc }} {{ weatherInfo.temp }}</text>
+            <text class="weather-desc">{{ weatherInfo.tip }}</text>
+          </view>
+        </view>
+
+        <!-- 今日语录 -->
+        <view class="quote-section" v-if="dailyQuote">
+          <view class="quote-divider"></view>
+          <view class="quote-content">
+            <text class="quote-icon">今日语录：</text>
+            <text class="quote-text">{{ dailyQuote }}</text>
+          </view>
         </view>
       </view>
 
@@ -23,7 +37,9 @@
       <view class="todo-section" v-if="pendingTodos && pendingTodos.length > 0">
         <view class="section-header">
           <text class="section-icon">✅</text>
-          <text class="section-title">待办事项 ({{ pendingTodos.length }}项)</text>
+          <text class="section-title"
+            >待办事项 ({{ pendingTodos.length }}项)</text
+          >
         </view>
         <view class="todo-list">
           <view
@@ -47,9 +63,28 @@
           </view>
         </view>
         <!-- 显示更多提示 -->
-        <view v-if="pendingTodos.length > 3" class="more-todos" @click="goToTodoList">
-          <text class="more-text">还有 {{ pendingTodos.length - 3 }} 项待办事项</text>
+        <view
+          v-if="pendingTodos.length > 3"
+          class="more-todos"
+          @click="goToTodoList"
+        >
+          <text class="more-text"
+            >还有 {{ pendingTodos.length - 3 }} 项待办事项</text
+          >
           <text class="more-arrow">→</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 经期提醒卡片 -->
+    <view class="menstruation-card" v-if="menstruationReminder">
+      <text class="card-title">经期提醒</text>
+      <view class="menstruation-item">
+        <text class="menstruation-icon">{{ menstruationReminder.emoji }}</text>
+        <view class="menstruation-content">
+          <text class="menstruation-message">{{
+            menstruationReminder.message
+          }}</text>
         </view>
       </view>
     </view>
@@ -71,7 +106,11 @@
           <text class="birthday-name">{{ birthday.name }}</text>
           <view class="birthday-info">
             <text class="calendar-icon">📅</text>
-            <text class="birthday-text">{{ birthday.name }}的{{ birthday.age }}岁生日还有{{ birthday.daysUntil }}天</text>
+            <text class="birthday-text"
+              >{{ birthday.name }}的{{ birthday.age }}岁生日还有{{
+                birthday.daysUntil
+              }}天</text
+            >
           </view>
         </view>
       </view>
@@ -93,7 +132,10 @@
           <text class="holiday-name">{{ holiday.name }}</text>
           <view class="holiday-info">
             <text class="calendar-icon">📅</text>
-            <text class="holiday-text">还有{{ holiday.daysUntil }}天就是{{ holiday.name }}{{ holiday.holiday ? '（放假）' : '' }}</text>
+            <text class="holiday-text"
+              >还有{{ holiday.daysUntil }}天就是{{ holiday.name
+              }}{{ holiday.holiday ? "（放假）" : "" }}</text
+            >
           </view>
         </view>
       </view>
@@ -107,6 +149,7 @@ import { formatDate } from "@/utils";
 
 const props = defineProps({
   weatherInfo: Object,
+  dailyQuote: String,
   menstruationReminder: Object,
   pendingTodos: Array,
   upcomingBirthdays: Array,
@@ -117,21 +160,22 @@ const emit = defineEmits(["todo-complete"]);
 
 // 计算属性
 const hasAnyReminder = computed(() => {
-  const hasReminder = (
+  const hasReminder =
     props.weatherInfo ||
+    props.dailyQuote ||
     (props.upcomingHolidays && props.upcomingHolidays.length > 0) ||
     (props.upcomingBirthdays && props.upcomingBirthdays.length > 0) ||
     (props.pendingTodos && props.pendingTodos.length > 0) ||
-    props.menstruationReminder
-  );
+    props.menstruationReminder;
 
-  console.log('TodayReminders hasAnyReminder:', {
+  console.log("TodayReminders hasAnyReminder:", {
     weather: !!props.weatherInfo,
+    quote: !!props.dailyQuote,
     holidays: props.upcomingHolidays?.length || 0,
     birthdays: props.upcomingBirthdays?.length || 0,
     todos: props.pendingTodos?.length || 0,
     menstruation: !!props.menstruationReminder,
-    result: hasReminder
+    result: hasReminder,
   });
 
   return hasReminder;
@@ -139,32 +183,38 @@ const hasAnyReminder = computed(() => {
 
 // 获取待办事项天数文本
 const getTodoDaysText = (todo) => {
-  if (todo.urgency === 'overdue') {
+  if (todo.urgency === "overdue") {
     // 计算逾期天数
     if (todo.deadline) {
       const deadline = new Date(todo.deadline);
       const today = new Date();
-      const daysDiff = Math.ceil((today.getTime() - deadline.getTime()) / (1000 * 3600 * 24));
+      const daysDiff = Math.ceil(
+        (today.getTime() - deadline.getTime()) / (1000 * 3600 * 24)
+      );
       return `已逾期${daysDiff}天`;
     }
-    return '已逾期';
-  } else if (todo.urgency === 'today') {
-    return '今天截止';
-  } else if (todo.urgency === 'urgent') {
+    return "已逾期";
+  } else if (todo.urgency === "today") {
+    return "今天截止";
+  } else if (todo.urgency === "urgent") {
     if (todo.deadline) {
       const deadline = new Date(todo.deadline);
       const today = new Date();
-      const daysDiff = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 3600 * 24));
+      const daysDiff = Math.ceil(
+        (deadline.getTime() - today.getTime()) / (1000 * 3600 * 24)
+      );
       return `${daysDiff}天后截止`;
     }
-    return '即将截止';
+    return "即将截止";
   } else if (todo.deadline) {
     const deadline = new Date(todo.deadline);
     const today = new Date();
-    const daysDiff = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 3600 * 24));
+    const daysDiff = Math.ceil(
+      (deadline.getTime() - today.getTime()) / (1000 * 3600 * 24)
+    );
     return `${daysDiff}天后截止`;
   }
-  return '无截止日期';
+  return "无截止日期";
 };
 
 // 方法
@@ -234,46 +284,72 @@ const handleTodoComplete = (todo) => {
   }
 
   .weather-card {
-    display: flex;
-    align-items: center;
-    gap: 16rpx;
     padding: 20rpx;
-    background: linear-gradient(135deg, #FFE4E6, #E6F3FF);
+    background: linear-gradient(135deg, #ffe4e6, #e6f3ff);
     border-radius: 16rpx;
-    margin-bottom: 20rpx;
+    margin-bottom: 12rpx;
 
-    .weather-icon {
-      font-size: 48rpx;
-    }
+    .weather-row {
+      display: flex;
+      align-items: center;
+      gap: 16rpx;
 
-    .weather-content {
-      flex: 1;
-
-      .weather-temp {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
-        display: block;
-        margin-bottom: 4rpx;
+      .weather-icon {
+        font-size: 48rpx;
       }
 
-      .weather-desc {
-        font-size: 24rpx;
-        color: #666;
+      .weather-content {
+        flex: 1;
+
+        .weather-temp {
+          font-size: 32rpx;
+          font-weight: bold;
+          color: #333;
+          display: block;
+          margin-bottom: 4rpx;
+        }
+
+        .weather-desc {
+          font-size: 24rpx;
+          color: #666;
+        }
+      }
+    }
+
+    .quote-section {
+      .quote-divider {
+        height: 1rpx;
+        background: rgba(255, 255, 255, 0.3);
+        margin: 16rpx 0 12rpx 0;
+      }
+
+      .quote-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 12rpx;
+
+        .quote-icon {
+          font-size: 24rpx;
+          margin-top: 2rpx;
+        }
+
+        .quote-text {
+          flex: 1;
+          font-size: 26rpx;
+          color: #555;
+          line-height: 1.4;
+          font-style: italic;
+        }
       }
     }
   }
 
   .todo-section {
     .section-header {
-
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
       margin-bottom: 16rpx;
-
-      .section-left {
-        display: flex;
-        align-items: center;
-        gap: 8rpx;
-      }
 
       .section-icon {
         font-size: 24rpx;
@@ -324,8 +400,8 @@ const handleTodoComplete = (todo) => {
             transition: all 0.3s;
 
             &.completed {
-              background: #4CAF50;
-              border-color: #4CAF50;
+              background: #4caf50;
+              border-color: #4caf50;
 
               .check-icon {
                 color: white;
@@ -372,9 +448,63 @@ const handleTodoComplete = (todo) => {
   }
 }
 
+// 经期提醒卡片
+.menstruation-card {
+  background: linear-gradient(135deg, #ffe4e6, #f8e6ff);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+
+  .card-title {
+    font-size: 28rpx;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 16rpx;
+    display: block;
+  }
+
+  .menstruation-item {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+
+    .menstruation-icon {
+      font-size: 32rpx;
+    }
+
+    .menstruation-content {
+      flex: 1;
+
+      .menstruation-message {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: #333;
+        display: block;
+        margin-bottom: 8rpx;
+      }
+
+      .menstruation-info {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+
+        .calendar-icon {
+          font-size: 20rpx;
+        }
+
+        .days-text {
+          font-size: 24rpx;
+          color: #ff2d92;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+
 // 生日提醒卡片
 .birthday-card {
-  background: linear-gradient(135deg, #E6F3FF, #E6FFE6);
+  background: linear-gradient(135deg, #e6f3ff, #e6ffe6);
   border-radius: 20rpx;
   padding: 24rpx;
   margin-bottom: 16rpx;
@@ -427,7 +557,7 @@ const handleTodoComplete = (todo) => {
 
 // 节日提醒卡片
 .holiday-card {
-  background: linear-gradient(135deg, #FFE4E6, #F0E6FF);
+  background: linear-gradient(135deg, #ffe4e6, #f0e6ff);
   border-radius: 20rpx;
   padding: 24rpx;
   margin-bottom: 16rpx;

@@ -307,6 +307,48 @@ class ReminderService {
   }
 
   /**
+   * 获取今日语录
+   * @returns {String} 今日语录
+   */
+  getDailyQuote() {
+    const quotes = [
+      "今天的努力是明天成功的基石，坚持下去！",
+      "每一个小小的进步都值得庆祝，你做得很好。",
+      "困难只是成长路上的垫脚石，勇敢面对吧。",
+      "相信自己的能力，你比想象中更强大。",
+      "保持好奇心，世界还有很多美好等你发现。",
+      "善待自己，你值得拥有所有的美好。",
+      "今天的选择决定明天的你，选择积极向上。",
+      "不要害怕犯错，错误是学习的最好老师。",
+      "保持感恩的心，生活会回馈给你更多惊喜。",
+      "做自己喜欢的事，成为自己想成为的人。"
+    ];
+
+    // 根据日期生成随机索引，确保同一天返回相同的语录
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+    const hash = this.simpleHash(dateString);
+    const index = hash % quotes.length;
+
+    return quotes[index];
+  }
+
+  /**
+   * 简单哈希函数
+   * @param {String} str
+   * @returns {Number}
+   */
+  simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 转换为32位整数
+    }
+    return Math.abs(hash);
+  }
+
+  /**
    * 获取天气信息（模拟数据，实际需要接入天气API）
    * @returns {Object} 天气信息
    */
