@@ -49,16 +49,27 @@
             @click="goToTodoDetail(todo.recordId)"
           >
             <text class="todo-icon">📄</text>
-            <text class="todo-text">{{ todo.content }}</text>
-            <view class="todo-status">
-              <view
-                class="status-circle"
-                :class="{ completed: todo.isCompleted }"
-                @click.stop="handleTodoComplete(todo)"
-              >
-                <text v-if="todo.isCompleted" class="check-icon">✓</text>
-              </view>
+            <view class="todo-content">
+              <text class="todo-text">{{ todo.content }}</text>
               <text class="todo-days">{{ getTodoDaysText(todo) }}</text>
+            </view>
+            <view class="todo-status">
+              <view class="action-buttons">
+                <!-- 完成按钮 -->
+                <view
+                  class="action-button complete-button"
+                  @click.stop="handleTodoComplete(todo)"
+                >
+                  <text class="action-icon">✓</text>
+                </view>
+                <!-- 关闭按钮 -->
+                <view
+                  class="action-button close-button"
+                  @click.stop="handleTodoClose(todo)"
+                >
+                  <text class="action-icon">✕</text>
+                </view>
+              </view>
             </view>
           </view>
         </view>
@@ -141,10 +152,35 @@
       </view>
     </view>
   </view>
+
+  <!-- 自定义确认弹窗 -->
+  <view v-if="showConfirmModal" class="modal-overlay" @click="closeModal">
+    <view class="modal-content" @click.stop>
+      <view class="modal-header">
+        <text class="modal-title">{{ modalData.title }}</text>
+      </view>
+      <view class="modal-body">
+        <text class="modal-message">{{ modalData.message }}</text>
+        <view class="note-section">
+          <text class="note-label">备注：</text>
+          <textarea
+            v-model="noteInput"
+            class="note-textarea"
+            :placeholder="modalData.placeholder"
+            maxlength="200"
+          />
+        </view>
+      </view>
+      <view class="modal-footer">
+        <button class="modal-button cancel-button" @click="closeModal">取消</button>
+        <button class="modal-button confirm-button" @click="confirmAction">{{ modalData.confirmText }}</button>
+      </view>
+    </view>
+  </view>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { formatDate } from "@/utils";
 
 const props = defineProps({
@@ -156,7 +192,57 @@ const props = defineProps({
   upcomingHolidays: Array,
 });
 
-const emit = defineEmits(["todo-complete"]);
+const emit = defineEmits(["todo-complete", "todo-close"]);
+
+// 弹窗相关数据
+const showConfirmModal = ref(false);
+const noteInput = ref('');
+const modalData = ref({});
+const currentTodo = ref(null);
+const currentAction = ref('');
+
+// 关闭弹窗
+const closeModal = () => {
+  showConfirmModal.value = false;
+  noteInput.value = '';
+  modalData.value = {};
+  currentTodo.value = null;
+  currentAction.value = '';
+};
+
+// 确认操作
+const confirmAction = () => {
+  if (currentAction.value === 'complete') {
+    const completeData = {
+      ...currentTodo.value,
+      isCompleted: true,
+      completedAt: new Date().toISOString(),
+      completionNote: noteInput.value || '',
+      status: 'completed'
+    };
+    emit("todo-complete", completeData);
+    uni.showToast({
+      title: '已完成',
+      icon: 'success',
+      duration: 1500
+    });
+  } else if (currentAction.value === 'close') {
+    const closeData = {
+      ...currentTodo.value,
+      isCompleted: false,
+      closedAt: new Date().toISOString(),
+      closeNote: noteInput.value || '',
+      status: 'closed'
+    };
+    emit("todo-close", closeData);
+    uni.showToast({
+      title: '已关闭',
+      icon: 'success',
+      duration: 1500
+    });
+  }
+  closeModal();
+};
 
 // 计算属性
 const hasAnyReminder = computed(() => {
@@ -237,7 +323,31 @@ const goToBirthdayDetail = (recordId) => {
 };
 
 const handleTodoComplete = (todo) => {
-  emit("todo-complete", todo);
+  console.log('handleTodoComplete called', todo);
+  currentTodo.value = todo;
+  currentAction.value = 'complete';
+  modalData.value = {
+    title: '完成待办事项',
+    message: `确定要完成"${todo.content}"吗？`,
+    placeholder: '输入完成备注（可选）...',
+    confirmText: '完成'
+  };
+  showConfirmModal.value = true;
+  console.log('showConfirmModal set to true');
+};
+
+const handleTodoClose = (todo) => {
+  console.log('handleTodoClose called', todo);
+  currentTodo.value = todo;
+  currentAction.value = 'close';
+  modalData.value = {
+    title: '关闭待办事项',
+    message: `确定要关闭"${todo.content}"吗？`,
+    placeholder: '输入关闭原因（可选）...',
+    confirmText: '关闭'
+  };
+  showConfirmModal.value = true;
+  console.log('showConfirmModal set to true');
 };
 </script>
 
@@ -365,7 +475,7 @@ const handleTodoComplete = (todo) => {
     .todo-list {
       .todo-item {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 12rpx;
         padding: 12rpx 0;
         border-bottom: 1rpx solid #f0f0f0;
@@ -376,44 +486,84 @@ const handleTodoComplete = (todo) => {
 
         .todo-icon {
           font-size: 24rpx;
+          margin-top: 4rpx;
         }
 
-        .todo-text {
+        .todo-content {
           flex: 1;
-          font-size: 28rpx;
-          color: #333;
-        }
 
-        .todo-status {
-          display: flex;
-          align-items: center;
-          gap: 8rpx;
-
-          .status-circle {
-            width: 32rpx;
-            height: 32rpx;
-            border: 2rpx solid #ddd;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-
-            &.completed {
-              background: #4caf50;
-              border-color: #4caf50;
-
-              .check-icon {
-                color: white;
-                font-size: 20rpx;
-                font-weight: bold;
-              }
-            }
+          .todo-text {
+            font-size: 28rpx;
+            color: #333;
+            display: block;
+            line-height: 1.4;
+            margin-bottom: 4rpx;
           }
 
           .todo-days {
             font-size: 24rpx;
             color: #999;
+            display: block;
+            line-height: 1.2;
+          }
+        }
+
+        .todo-status {
+          display: flex;
+          align-items: flex-start;
+          margin-top: 4rpx;
+
+          .action-buttons {
+            display: flex;
+            gap: 8rpx;
+
+            .action-button {
+              width: 32rpx;
+              height: 32rpx;
+              border-radius: 6rpx;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.3s;
+              cursor: pointer;
+
+              .action-icon {
+                font-size: 18rpx;
+                font-weight: bold;
+              }
+
+              &:active {
+                transform: scale(0.95);
+              }
+
+              &.complete-button {
+                background: #4caf50;
+                border: 2rpx solid #4caf50;
+
+                .action-icon {
+                  color: white;
+                }
+
+                &:hover {
+                  background: #45a049;
+                  border-color: #45a049;
+                }
+              }
+
+              &.close-button {
+                background: #f44336;
+                border: 2rpx solid #f44336;
+
+                .action-icon {
+                  color: white;
+                }
+
+                &:hover {
+                  background: #da190b;
+                  border-color: #da190b;
+                }
+              }
+            }
           }
         }
       }
@@ -603,6 +753,127 @@ const handleTodoComplete = (todo) => {
           font-size: 24rpx;
           color: #666;
         }
+      }
+    }
+  }
+}
+
+// 自定义弹窗样式
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16rpx;
+  width: 600rpx;
+  max-width: 90vw;
+  overflow: hidden;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  padding: 32rpx 32rpx 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+
+  .modal-title {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+  }
+}
+
+.modal-body {
+  padding: 24rpx 32rpx;
+
+  .modal-message {
+    font-size: 28rpx;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 24rpx;
+    white-space: pre-line;
+  }
+
+  .note-section {
+    .note-label {
+      font-size: 26rpx;
+      color: #333;
+      margin-bottom: 12rpx;
+      display: block;
+    }
+
+    .note-textarea {
+      width: 100%;
+      min-height: 120rpx;
+      padding: 16rpx;
+      border: 2rpx solid #e0e0e0;
+      border-radius: 8rpx;
+      font-size: 26rpx;
+      color: #333;
+      background: #fafafa;
+      resize: none;
+      box-sizing: border-box;
+
+      &:focus {
+        border-color: #667eea;
+        background: white;
+        outline: none;
+      }
+
+      &::placeholder {
+        color: #999;
+      }
+    }
+  }
+}
+
+.modal-footer {
+  padding: 16rpx 32rpx 32rpx;
+  display: flex;
+  gap: 16rpx;
+  justify-content: flex-end;
+
+  .modal-button {
+    padding: 16rpx 32rpx;
+    border-radius: 8rpx;
+    font-size: 28rpx;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &.cancel-button {
+      background: #f5f5f5;
+      color: #666;
+
+      &:hover {
+        background: #e0e0e0;
+      }
+
+      &:active {
+        background: #d0d0d0;
+      }
+    }
+
+    &.confirm-button {
+      background: #667eea;
+      color: white;
+
+      &:hover {
+        background: #5a6fd8;
+      }
+
+      &:active {
+        background: #4c63d2;
       }
     }
   }
