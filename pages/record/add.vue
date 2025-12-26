@@ -111,6 +111,14 @@
           @append-essay="appendToEssay"
         />
 
+        <!-- 月经记录表单 -->
+        <MenstruationForm
+          v-else-if="currentModule === 'menstruation'"
+          :form-data="formData"
+          :records="recordStore.records"
+          @update:form-data="updateFormData"
+        />
+
         <!-- 通用描述字段（如果表单组件中没有包含） -->
         <view class="form-item" v-if="showDescription">
           <text class="form-label">详细描述</text>
@@ -155,7 +163,7 @@ import {
   EXERCISE_TYPES,
   ESSAY_TYPES,
 } from "@/utils/constants";
-import { showToast } from "@/utils";
+import { showToast, formatDate } from "@/utils";
 
 // 组件导入
 import DailyMoodForm from "./components/DailyMoodForm.vue";
@@ -166,6 +174,7 @@ import TodoForm from "./components/TodoForm.vue";
 import FoodForm from "./components/FoodForm.vue";
 import ExerciseForm from "./components/ExerciseForm.vue";
 import EssayForm from "./components/EssayForm.vue";
+import MenstruationForm from "./components/MenstruationForm.vue";
 
 const recordStore = useRecordStore();
 
@@ -306,6 +315,26 @@ const initFormData = (moduleType) => {
         essayType: 'thoughts',
         content: '',
       };
+      break;
+    case 'menstruation':
+      // 从 URL 参数获取预设日期
+      const today = new Date();
+      const defaultDate = formatDate(today, 'YYYY-MM-DD');
+
+      formData.value = {
+        ...baseData,
+        startDate: options.date || defaultDate,
+        endDate: null,
+        flow: 'mid',
+        painLevel: 'none',
+        remark: '',
+      };
+
+      // 处理从日历页面传入的特殊操作
+      if (options.action === 'start' && options.date) {
+        formData.value.startDate = options.date;
+        formData.value.endDate = null;
+      }
       break;
     default:
       formData.value = baseData;

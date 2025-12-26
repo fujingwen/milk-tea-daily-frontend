@@ -252,6 +252,31 @@
           <text class="item-value">{{ record.remark }}</text>
         </view>
       </template>
+
+      <!-- 月经记录 -->
+      <template v-if="record.moduleType === 'menstruation'">
+        <view class="content-item">
+          <text class="item-label">经期日期</text>
+          <view class="date-range">
+            <text class="date-text">{{ record.startDate }}</text>
+            <text class="date-separator" v-if="record.endDate">~</text>
+            <text class="date-text" v-if="record.endDate">{{ record.endDate }}</text>
+            <text class="date-text" v-else>至今</text>
+          </view>
+        </view>
+        <view class="content-item">
+          <text class="item-label">经量</text>
+          <text class="item-value">{{ getFlowLabel(record.flow) }}</text>
+        </view>
+        <view class="content-item">
+          <text class="item-label">痛经程度</text>
+          <text class="item-value">{{ getPainLabel(record.painLevel) }}</text>
+        </view>
+        <view class="content-item" v-if="record.remark">
+          <text class="item-label">备注</text>
+          <text class="item-value">{{ record.remark }}</text>
+        </view>
+      </template>
     </view>
 
     <!-- 操作记录 -->
@@ -296,6 +321,8 @@ import {
   RECIPE_CATEGORIES,
   DIFFICULTY_LEVELS,
   EXERCISE_TYPES,
+  FLOW_TYPES,
+  PAIN_LEVELS,
 } from "@/utils/constants";
 import { formatDate, showConfirm, showToast } from "@/utils";
 
@@ -367,6 +394,16 @@ const getMealLabel = (type) => {
 const getRatingLabel = (rating) => {
   const ratingOption = RATING_OPTIONS.find((r) => r.value === rating);
   return ratingOption ? ratingOption.label : "未评分";
+};
+
+const getFlowLabel = (flow) => {
+  const flowType = FLOW_TYPES.find((f) => f.value === flow);
+  return flowType ? flowType.label : "未知";
+};
+
+const getPainLabel = (pain) => {
+  const painType = PAIN_LEVELS.find((p) => p.value === pain);
+  return painType ? painType.label : "未知";
 };
 
 const editRecord = () => {
@@ -598,6 +635,23 @@ onMounted(() => {
       font-size: 36rpx;
       font-weight: bold;
       color: #ff6347;
+    }
+
+    .date-range {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+
+      .date-text {
+        font-size: 30rpx;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .date-separator {
+        font-size: 28rpx;
+        color: #666;
+      }
     }
   }
 }

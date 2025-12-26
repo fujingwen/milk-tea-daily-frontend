@@ -2,7 +2,7 @@
   <view class="calendar-page">
     <!-- 日历头部 -->
     <view class="calendar-header card">
-      <view class="header-controls">
+      <view class="header-controls" v-if="viewMode !== 'menstruation'">
         <view class="nav-controls" v-if="viewMode === 'calendar'">
           <view class="nav-btn" @click="prevMonth">
             <text class="nav-icon">‹</text>
@@ -13,8 +13,11 @@
           <view class="nav-btn" @click="nextMonth">
             <text class="nav-icon">›</text>
           </view>
+          <view class="today-btn" @click="goToToday">
+            <text class="today-text">回今天</text>
+          </view>
         </view>
-        <view class="timeline-controls" v-else>
+        <view class="timeline-controls" v-else-if="viewMode === 'timeline'">
           <text class="timeline-title">时间轴</text>
           <view class="timeline-actions">
             <view class="action-btn" @click="scrollToToday">
@@ -25,6 +28,13 @@
       </view>
 
       <view class="view-switcher">
+        <view
+          class="switch-item"
+          :class="{ active: viewMode === 'menstruation' }"
+          @click="switchToMenstruation"
+        >
+          🌸 月经
+        </view>
         <view
           class="switch-item"
           :class="{ active: viewMode === 'calendar' }"
@@ -140,6 +150,54 @@
       </view>
     </view>
 
+    <!-- 月经视图 -->
+    <view v-if="viewMode === 'menstruation'" class="menstruation-view">
+      <!-- 月经日历组件包装器 -->
+      <view class="menstruation-calendar-wrapper">
+        <MenstruationCalendar
+          class="menstruation-calendar"
+          :current-date="currentDate"
+          :records="recordStore.records"
+          @date-click="onMenstruationDateClick"
+          @add-record="addMenstruationRecord"
+          @edit-record="editMenstruationRecord"
+          @mark-period-start="markPeriodStart"
+          @mark-period-end="markPeriodEnd"
+        />
+      </view>
+
+      <!-- 录入功能 -->
+      <view class="menstruation-actions card">
+        <view class="actions-title">
+          <text class="title-text">快速录入</text>
+          <text class="selected-date" v-if="selectedDate">
+            已选择：{{ formatDate(selectedDate, 'MM月DD日') }}
+          </text>
+        </view>
+        <view class="action-buttons">
+          <view
+            class="action-btn period-start"
+            :class="{ disabled: !selectedDate }"
+            @click="quickMarkPeriodStart"
+          >
+            <text class="btn-icon">🌸</text>
+            <text class="btn-text">月经来了</text>
+          </view>
+          <view
+            class="action-btn period-end"
+            :class="{ disabled: !selectedDate }"
+            @click="quickMarkPeriodEnd"
+          >
+            <text class="btn-icon">✨</text>
+            <text class="btn-text">月经走了</text>
+          </view>
+        </view>
+        <view class="date-hint">
+          <text class="hint-text">点击日历选择日期</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 时间轴视图 -->
     <view v-else class="timeline-view">
       <scroll-view
@@ -235,12 +293,13 @@ import { ref, computed, onMounted, nextTick } from "vue";
 import { useRecordStore } from "@/stores";
 import { MODULE_CONFIG } from "@/utils/constants";
 import { formatDate } from "@/utils";
+import MenstruationCalendar from "./components/MenstruationCalendar.vue";
 
 const recordStore = useRecordStore();
 
 // 响应式数据
 const currentDate = ref(new Date());
-const selectedDate = ref(new Date());
+const selectedDate = ref(null); // 月经模式下不默认选中日期
 const viewMode = ref("calendar"); // 'calendar' 或 'timeline'
 const scrollTop = ref(0);
 const timelineDays = ref(30); // 时间轴显示的天数
@@ -416,6 +475,10 @@ const nextMonth = () => {
   currentDate.value = newDate;
 };
 
+const goToToday = () => {
+  currentDate.value = new Date();
+};
+
 const selectDate = (date) => {
   selectedDate.value = date;
 };
@@ -426,6 +489,10 @@ const switchToCalendar = () => {
 
 const switchToTimeline = () => {
   viewMode.value = "timeline";
+};
+
+const switchToMenstruation = () => {
+  viewMode.value = "menstruation";
 };
 
 const scrollToToday = () => {
@@ -469,6 +536,148 @@ const addRecord = () => {
   });
 };
 
+// 月经相关方法
+const onMenstruationDateClick = (date) => {
+  selectedDate.value = date;
+};
+
+const addMenstruationRecord = (date) => {
+  uni.navigateTo({
+    url: `/pages/record/add?module=menstruation&date=${formatDate(date, 'YYYY-MM-DD')}`,
+  });
+};
+
+const editMenstruationRecord = (date) => {
+  // 查找该日期的月经记录
+  const dateStr = date.toDateString();
+  const menstruationRecord = recordStore.records.find(record => {
+    const recordDate = new Date(record.startDate || record.createTime).toDateString();
+    return record.moduleType === 'menstruation' && recordDate === dateStr;
+  });
+
+  if (menstruationRecord) {
+    uni.navigateTo({
+      url: `/pages/record/detail?id=${menstruationRecord.recordId}`,
+    });
+  } else {
+    addMenstruationRecord(date);
+  }
+};
+
+const markPeriodStart = (date) => {
+  uni.navigateTo({
+    url: `/pages/record/add?module=menstruation&action=start&date=${formatDate(date, 'YYYY-MM-DD')}`,
+  });
+};
+
+const markPeriodEnd = (date) => {
+  // 查找最近的月经记录来结束
+  const today = formatDate(date, 'YYYY-MM-DD');
+  uni.showModal({
+    title: '结束经期',
+    content: `确认在 ${today} 结束经期吗？`,
+    success: (res) => {
+      if (res.confirm) {
+        // 这里可以添加结束经期的逻辑
+        console.log('结束经期:', today);
+      }
+    }
+  });
+};
+
+// 快速录入方法
+const quickMarkPeriodStart = () => {
+  // 验证是否选择了日期
+  if (!selectedDate.value) {
+    uni.showToast({
+      title: '请先在日历中选择日期',
+      icon: 'none'
+    });
+    return;
+  }
+
+  const targetDate = selectedDate.value;
+  const targetDateStr = formatDate(targetDate, 'YYYY-MM-DD');
+
+  uni.showModal({
+    title: '开始经期',
+    content: `确认 ${targetDateStr} 月经来了吗？`,
+    success: (res) => {
+      if (res.confirm) {
+        // 创建月经开始记录
+        const periodRecord = {
+          recordId: Date.now().toString(),
+          moduleType: 'menstruation',
+          startDate: targetDateStr,
+          endDate: null,
+          periodType: 'start',
+          amount: 'normal',
+          symptoms: [],
+          mood: 'normal',
+          description: '',
+          createTime: targetDate.getTime(),
+          updateTime: targetDate.getTime()
+        };
+
+        recordStore.addRecord(periodRecord);
+        uni.showToast({
+          title: '已记录月经开始',
+          icon: 'success'
+        });
+      }
+    }
+  });
+};
+
+const quickMarkPeriodEnd = () => {
+  // 验证是否选择了日期
+  if (!selectedDate.value) {
+    uni.showToast({
+      title: '请先在日历中选择日期',
+      icon: 'none'
+    });
+    return;
+  }
+
+  const targetDate = selectedDate.value;
+  const targetDateStr = formatDate(targetDate, 'YYYY-MM-DD');
+
+  uni.showModal({
+    title: '结束经期',
+    content: `确认 ${targetDateStr} 月经走了吗？`,
+    success: (res) => {
+      if (res.confirm) {
+        // 查找最近的月经开始记录
+        const periodRecords = recordStore.records
+          .filter(record => record.moduleType === 'menstruation' && record.periodType === 'start')
+          .sort((a, b) => b.startDate.localeCompare(a.startDate));
+
+        if (periodRecords.length > 0) {
+          const latestPeriod = periodRecords[0];
+          // 更新记录为结束
+          const endRecord = {
+            ...latestPeriod,
+            periodType: 'end',
+            endDate: targetDateStr,
+            updateTime: targetDate.getTime()
+          };
+
+          recordStore.addRecord(endRecord);
+          uni.showToast({
+            title: '已记录月经结束',
+            icon: 'success'
+          });
+        } else {
+          uni.showToast({
+            title: '未找到月经开始记录',
+            icon: 'none'
+          });
+        }
+      }
+    }
+  });
+};
+
 // 生命周期
 onMounted(() => {
   recordStore.loadFromStorage();
@@ -478,69 +687,122 @@ onMounted(() => {
 <style lang="scss" scoped>
 .calendar-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
   padding: 20rpx;
-}
 
-.calendar-header {
-  margin-bottom: 20rpx;
+  .card {
+    background: white;
+    border-radius: 16rpx;
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+    padding: 24rpx;
+    transition: all 0.3s;
 
-  .header-controls {
+    &:hover {
+      box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.12);
+      transform: translateY(-2rpx);
+    }
+  }
+
+  .calendar-header {
     margin-bottom: 20rpx;
 
-    .nav-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .card {
+      background: white;
+      border-radius: 16rpx;
+      box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+      padding: 24rpx;
+      transition: all 0.3s;
 
-      .nav-btn {
-        width: 60rpx;
-        height: 60rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f5f5f5;
-        border-radius: 50%;
-        transition: all 0.3s;
-
-        &:active {
-          background: #e8e8e8;
-        }
-
-        .nav-icon {
-          font-size: 32rpx;
-          color: #333;
-          font-weight: bold;
-        }
-      }
-
-      .current-month {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
+      &:hover {
+        box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.12);
+        transform: translateY(-2rpx);
       }
     }
 
-    .timeline-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .header-controls {
+      margin-bottom: 20rpx;
 
-      .timeline-title {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
-      }
+      .nav-controls {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 20rpx;
 
-      .timeline-actions {
-        .action-btn {
-          padding: 12rpx 24rpx;
-          background: #667eea;
-          border-radius: 20rpx;
+          .nav-btn {
+            width: 60rpx;
+            height: 60rpx;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
 
-          .action-text {
-            font-size: 26rpx;
-            color: white;
+            &:active {
+              background: linear-gradient(135deg, #e2e6ea, #b7c0d1);
+              transform: scale(0.95);
+            }
+
+            .nav-icon {
+              font-size: 32rpx;
+              color: #333;
+              font-weight: bold;
+            }
+          }
+
+          .current-month {
+            font-size: 32rpx;
+            font-weight: bold;
+            color: #333;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+          }
+
+          .today-btn {
+            padding: 8rpx 16rpx;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20rpx;
+            box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+            transition: all 0.3s;
+
+            &:active {
+              transform: scale(0.95);
+              box-shadow: 0 2rpx 6rpx rgba(102, 126, 234, 0.2);
+            }
+
+            .today-text {
+              font-size: 24rpx;
+              color: white;
+              font-weight: 500;
+            }
+          }
+        }
+
+      .timeline-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .timeline-title {
+          font-size: 32rpx;
+          font-weight: bold;
+          color: #333;
+        }
+
+        .timeline-actions {
+          .action-btn {
+            padding: 12rpx 24rpx;
+            background: #667eea;
+            border-radius: 20rpx;
+
+            .action-text {
+              font-size: 26rpx;
+              color: white;
+            }
           }
         }
       }
@@ -576,6 +838,16 @@ onMounted(() => {
 .calendar-view {
   .calendar-body {
     margin-bottom: 20rpx;
+    background: white;
+    border-radius: 16rpx;
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+    padding: 24rpx;
+    transition: all 0.3s;
+
+    &:hover {
+      box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.12);
+      transform: translateY(-2rpx);
+    }
 
     .weekdays {
       display: grid;
@@ -656,6 +928,16 @@ onMounted(() => {
 
   .selected-records {
     margin-bottom: 20rpx;
+    background: white;
+    border-radius: 16rpx;
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+    padding: 24rpx;
+    transition: all 0.3s;
+
+    &:hover {
+      box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.12);
+      transform: translateY(-2rpx);
+    }
 
     .records-header {
       display: flex;
@@ -772,6 +1054,135 @@ onMounted(() => {
           color: #333;
           font-weight: 500;
         }
+      }
+    }
+  }
+}
+
+// 月经视图样式
+.menstruation-view {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 140rpx);
+
+  .menstruation-calendar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 20rpx;
+
+    .menstruation-calendar {
+      max-height: 60vh;
+      overflow: hidden;
+    }
+  }
+
+  .menstruation-actions {
+    flex-shrink: 0;
+    margin-bottom: 20rpx;
+
+    .actions-title {
+      margin-bottom: 20rpx;
+
+      .title-text {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: #333;
+        display: block;
+        margin-bottom: 8rpx;
+      }
+
+      .selected-date {
+        font-size: 26rpx;
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+        padding: 8rpx 16rpx;
+        border-radius: 12rpx;
+        display: inline-block;
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 20rpx;
+
+      .action-btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 30rpx 20rpx;
+        border-radius: 16rpx;
+        transition: all 0.3s;
+
+        &.period-start {
+          background: linear-gradient(135deg, #ff6b9d, #ff2d92);
+
+          .btn-icon {
+            font-size: 32rpx;
+            margin-bottom: 8rpx;
+          }
+
+          .btn-text {
+            font-size: 26rpx;
+            color: white;
+            font-weight: 500;
+          }
+
+          &.disabled {
+            background: #e8e8e8;
+
+            .btn-icon,
+            .btn-text {
+              color: #999;
+            }
+          }
+        }
+
+        &.period-end {
+          background: linear-gradient(135deg, #667eea, #764ba2);
+
+          .btn-icon {
+            font-size: 32rpx;
+            margin-bottom: 8rpx;
+          }
+
+          .btn-text {
+            font-size: 26rpx;
+            color: white;
+            font-weight: 500;
+          }
+
+          &.disabled {
+            background: #e8e8e8;
+
+            .btn-icon,
+            .btn-text {
+              color: #999;
+            }
+          }
+        }
+
+        &:not(.disabled):active {
+          transform: scale(0.95);
+          opacity: 0.8;
+        }
+
+        &.disabled:active {
+          transform: none;
+        }
+      }
+    }
+
+    .date-hint {
+      margin-top: 16rpx;
+      text-align: center;
+
+      .hint-text {
+        font-size: 24rpx;
+        color: #999;
       }
     }
   }

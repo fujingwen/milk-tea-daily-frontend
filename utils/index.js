@@ -298,7 +298,18 @@ export function daysBetween(date1, date2) {
   const firstDate = new Date(date1)
   const secondDate = new Date(date2)
   return Math.round(Math.abs((firstDate - secondDate) / oneDay))
-}// 生日相关工具函数
+}
+
+// 检查两个日期是否是同一天
+export function isSameDay(date1, date2) {
+  const d1 = new Date(date1)
+  const d2 = new Date(date2)
+  return d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+}
+
+// 生日相关工具函数
 
 // 计算年龄
 export function calculateAge(birthday) {
