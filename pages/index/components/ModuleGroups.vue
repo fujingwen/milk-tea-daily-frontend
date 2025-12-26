@@ -2,19 +2,21 @@
   <view class="modules-section">
     <!-- 今日打卡 -->
     <view class="module-group" v-if="!isModuleGroupCompletelyHidden('dailyCheckIn')">
-      <view class="group-card">
-        <view class="group-header">
-          <view class="group-title">
-            <text class="title-text">✨ 今日打卡</text>
+      <view class="checkin-card">
+        <view class="checkin-header">
+          <view class="header-left">
+            <text class="checkin-icon">🌟</text>
+            <text class="checkin-title">今日打卡</text>
           </view>
-          <view class="header-actions">
-            <text class="count-text">{{ getTodayCheckInCount }}/{{ dailyCheckInModules.length }}</text>
+          <view class="header-right">
+            <text class="checkin-progress">{{ getTodayCheckInCount }}/{{ dailyCheckInModules.length }}</text>
             <view class="hide-button" @click.stop="handleModuleHideWithConfirm('dailyCheckIn')">
               <text class="hide-text">✕</text>
             </view>
           </view>
         </view>
 
+        <!-- 打卡模块网格 -->
         <view class="module-grid">
           <view
             v-for="type in dailyCheckInModules"
@@ -28,6 +30,7 @@
               :style="{ backgroundColor: getModuleConfig(type).color }"
             >
               <text class="icon-text">{{ getModuleConfig(type).icon }}</text>
+              <!-- 完成标记 -->
               <view v-if="isTodayChecked(type)" class="check-badge">
                 <text class="check-text">✓</text>
               </view>
@@ -239,8 +242,10 @@ const goToAddRecord = (moduleType) => {
       url: "/pages/recipe/list",
     });
   } else {
+    // 对于非tabbar页面，使用navigateTo跳转
+    uni.setStorageSync('addRecordType', moduleType);
     uni.navigateTo({
-      url: `/pages/record/add?type=${moduleType}`,
+      url: "/pages/record/add",
     });
   }
 };
@@ -302,34 +307,42 @@ const handleModuleHideWithConfirm = async (groupKey) => {
 
   .module-group {
     margin-bottom: 20rpx;
+  }
 
-    .group-card {
-      background: white;
-      border-radius: 20rpx;
-      padding: 24rpx;
-      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-    }
+  // 今日打卡卡片样式
+  .checkin-card {
+    background: #fff;
+    border-radius: 20rpx;
+    padding: 24rpx;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
 
-    .group-header {
+    .checkin-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20rpx;
 
-      .group-title {
-        .title-text {
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+
+        .checkin-icon {
+          font-size: 24rpx;
+        }
+
+        .checkin-title {
           font-size: 30rpx;
           font-weight: bold;
           color: #333;
         }
       }
 
-      .header-actions {
+      .header-right {
         display: flex;
         align-items: center;
         gap: 16rpx;
 
-        .count-text {
+        .checkin-progress {
           font-size: 24rpx;
           color: #ff6b9d;
           font-weight: bold;
@@ -352,72 +365,122 @@ const handleModuleHideWithConfirm = async (groupKey) => {
         }
       }
     }
+  }
 
-    .module-grid {
+  .group-card {
+    background: #fff;
+    border-radius: 20rpx;
+    padding: 24rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  }
+
+  .group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+
+    .group-title {
+      .title-text {
+        font-size: 30rpx;
+        font-weight: bold;
+        color: #333;
+      }
+    }
+
+    .header-actions {
       display: flex;
-      flex-wrap: wrap;
+      align-items: center;
       gap: 16rpx;
 
-      .module-item {
-        width: calc((100% - 64rpx) / 5);
+      .count-text {
+        font-size: 24rpx;
+        color: #ff6b9d;
+        font-weight: bold;
+      }
+
+      .hide-button {
+        width: 56rpx;
+        height: 56rpx;
+        border-radius: 50%;
+        border: 2rpx solid #ff3b30;
         display: flex;
-        flex-direction: column;
         align-items: center;
-        padding: 16rpx 8rpx;
-        border-radius: 16rpx;
-        transition: all 0.3s;
+        justify-content: center;
+
+        .hide-text {
+          font-size: 20rpx;
+          color: #ff3b30;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+
+  .module-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+
+    .module-item {
+      width: calc((100% - 64rpx) / 5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16rpx 8rpx;
+      border-radius: 16rpx;
+      transition: all 0.3s;
+      position: relative;
+
+      &.checked {
+        background: rgba(102, 126, 234, 0.1);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      .module-icon {
+        width: 70rpx;
+        height: 70rpx;
+        border-radius: 18rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10rpx;
         position: relative;
 
-        &.checked {
-          background: rgba(102, 126, 234, 0.1);
+        .icon-text {
+          font-size: 32rpx;
         }
 
-        &:active {
-          transform: scale(0.95);
-        }
-
-        .module-icon {
-          width: 70rpx;
-          height: 70rpx;
-          border-radius: 18rpx;
+        .check-badge {
+          position: absolute;
+          top: -8rpx;
+          right: -8rpx;
+          width: 24rpx;
+          height: 24rpx;
+          border-radius: 50%;
+          background: #34c759;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 10rpx;
-          position: relative;
 
-          .icon-text {
-            font-size: 32rpx;
-          }
-
-          .check-badge {
-            position: absolute;
-            top: -8rpx;
-            right: -8rpx;
-            width: 24rpx;
-            height: 24rpx;
-            border-radius: 50%;
-            background: #34c759;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            .check-text {
-              font-size: 16rpx;
-              color: white;
-              font-weight: bold;
-            }
+          .check-text {
+            font-size: 16rpx;
+            color: white;
+            font-weight: bold;
           }
         }
+      }
 
-        .module-name {
-          font-size: 22rpx;
-          color: #333;
-          text-align: center;
+      .module-name {
+        font-size: 22rpx;
+        color: #333;
+        text-align: center;
 
-          &.checked {
-            color: #667eea;
-          }
+        &.checked {
+          color: #667eea;
         }
       }
     }

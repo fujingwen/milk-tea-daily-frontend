@@ -376,7 +376,7 @@ const handleActionClick = async (action) => {
       break;
     case "edit":
       uni.navigateTo({
-        url: `/pages/record/add?id=${selectedRecord.value.recordId}&edit=true`,
+        url: `/pages/record/list`,
       });
       break;
     case "delete":

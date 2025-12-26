@@ -117,12 +117,6 @@
         "text": "日历"
       },
       {
-        "pagePath": "pages/record/add",
-        "iconPath": "static/tab-add.svg",
-        "selectedIconPath": "static/tab-add-current.svg",
-        "text": "记录"
-      },
-      {
         "pagePath": "pages/modules/modules",
         "iconPath": "static/tab-modules.svg",
         "selectedIconPath": "static/tab-modules-current.svg",

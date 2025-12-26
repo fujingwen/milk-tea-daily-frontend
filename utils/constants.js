@@ -1,6 +1,6 @@
 // 模块类型常量
 export const MODULE_TYPES = {
-  MOOD: 'mood',
+  DAILY_MOOD: 'dailyMood',
   WEIGHT: 'weight',
   MILK_TEA: 'milkTea',
   WISH: 'wish',
@@ -11,7 +11,6 @@ export const MODULE_TYPES = {
   BIRTHDAY: 'birthday',
   FOOD: 'food',
   RECIPE: 'recipe',
-  KEYWORD: 'keyword',
   EXERCISE: 'exercise'
 }
 
@@ -21,7 +20,7 @@ export const MODULE_GROUPS = {
     name: '今日打卡',
     icon: '✨',
     color: '#667eea',
-    modules: ['mood', 'keyword', 'milkTea', 'weight', 'exercise']
+    modules: ['dailyMood', 'milkTea', 'weight', 'exercise']
   },
   lifeRecord: {
     name: '生活记录',
@@ -45,19 +44,12 @@ export const MODULE_GROUPS = {
 
 // 模块配置
 export const MODULE_CONFIG = {
-  [MODULE_TYPES.MOOD]: {
-    name: '心情',
+  [MODULE_TYPES.DAILY_MOOD]: {
+    name: '今日心情',
     icon: '😊',
     color: '#ff9500',
     group: 'dailyCheckIn',
-    fields: ['moodType', 'description']
-  },
-  [MODULE_TYPES.KEYWORD]: {
-    name: '今日关键字',
-    icon: '🏷️',
-    color: '#667eea',
-    group: 'dailyCheckIn',
-    fields: ['keywords', 'description']
+    fields: ['moodType', 'keywords', 'description']
   },
   [MODULE_TYPES.WEIGHT]: {
     name: '体重',
@@ -95,11 +87,11 @@ export const MODULE_CONFIG = {
     fields: ['startDate', 'endDate', 'flow', 'painLevel', 'remark']
   },
   [MODULE_TYPES.ESSAY]: {
-    name: '今日随笔',
-    icon: '📝',
+    name: '碎碎念',
+    icon: '💭',
     color: '#34c759',
     group: 'lifeRecord',
-    fields: ['content', 'tags', 'remark']
+    fields: ['essayType', 'content', 'canAppend']
   },
   [MODULE_TYPES.ACCOUNT]: {
     name: '记账',
@@ -354,6 +346,16 @@ export const RECIPE_TAGS = [
   '快手菜', '下饭菜', '减脂', '增肌', '儿童', '老人',
   '孕妇', '素食', '无油', '少盐', '微辣', '中辣', '重辣',
   '清淡', '重口味', '营养', '美容', '补血', '暖胃'
+]
+
+// 碎碎念类型
+export const ESSAY_TYPES = [
+  { value: 'thoughts', label: '碎碎念', emoji: '💭', color: '#34c759' },
+  { value: 'wish', label: '许个愿', emoji: '🌟', color: '#ff9500' },
+  { value: 'advice', label: '给自己的忠告', emoji: '💡', color: '#007aff' },
+  { value: 'complain', label: '吐槽一下', emoji: '😤', color: '#ff3b30' },
+  { value: 'gratitude', label: '感恩时刻', emoji: '🙏', color: '#ff6b9d' },
+  { value: 'reflection', label: '今日反思', emoji: '🤔', color: '#5856d6' }
 ]
 
 // 中国节日数据（公历和农历）

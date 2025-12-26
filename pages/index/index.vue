@@ -234,7 +234,7 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .index-page {
   min-height: 100vh;
-  background: $uni-bg-color-grey;
+  background: linear-gradient(180deg, #FFF5F4, #F8F4FF);
 }
 
 .modal-content {
